@@ -1,0 +1,381 @@
+{
+  "version": "1.0.0",
+  "language": "en-US",
+  "questions": [
+    {
+      "order": 1,
+      "id": "age_band",
+      "prompt": "How old are you?",
+      "type": "single",
+      "options": [
+        "18-24",
+        "25-34",
+        "35-44",
+        "45-54",
+        "55-64",
+        "65+"
+      ]
+    },
+    {
+      "order": 2,
+      "id": "current_situation",
+      "prompt": "Which best describes your current situation?",
+      "type": "single",
+      "options": [
+        "full_time_employee",
+        "part_time_employee",
+        "self_employed",
+        "freelancer",
+        "business_owner",
+        "student",
+        "unemployed",
+        "retired",
+        "between_careers",
+        "other"
+      ]
+    },
+    {
+      "order": 3,
+      "id": "professional_direction",
+      "prompt": "How do you currently feel about your professional direction?",
+      "type": "single",
+      "options": [
+        "clear",
+        "idea_unsure",
+        "several_ideas",
+        "stuck",
+        "want_different",
+        "starting_over"
+      ]
+    },
+    {
+      "order": 4,
+      "id": "primary_objectives",
+      "prompt": "What are you primarily trying to change? Choose up to two.",
+      "type": "multi",
+      "options": [
+        "extra_income",
+        "new_career",
+        "start_business",
+        "work_for_myself",
+        "remote_work",
+        "leave_job_eventually",
+        "meaningful_work",
+        "use_experience_differently",
+        "learn_valuable_skill",
+        "rebuild_after_setback",
+        "dont_know"
+      ]
+    },
+    {
+      "order": 5,
+      "id": "financial_impact",
+      "prompt": "What would make the biggest financial difference in your life right now?",
+      "type": "single",
+      "options": [
+        "250_month",
+        "500_month",
+        "1000_month",
+        "2500_month",
+        "replace_income",
+        "build_business_long_term",
+        "money_not_primary"
+      ]
+    },
+    {
+      "order": 6,
+      "id": "available_capital",
+      "prompt": "How much money could you realistically invest in building a new path?",
+      "type": "single",
+      "options": [
+        "0",
+        "up_to_100",
+        "100_500",
+        "500_1500",
+        "1500_5000",
+        "5000_plus"
+      ]
+    },
+    {
+      "order": 7,
+      "id": "income_urgency",
+      "prompt": "How soon do you need this new path to start generating income?",
+      "type": "single",
+      "options": [
+        "asap",
+        "30_days",
+        "3_months",
+        "6_months",
+        "1_year",
+        "patient"
+      ]
+    },
+    {
+      "order": 8,
+      "id": "risk_tolerance",
+      "prompt": "How much financial risk can you realistically tolerate?",
+      "type": "single",
+      "options": [
+        "almost_none",
+        "low",
+        "moderate",
+        "high",
+        "significant"
+      ]
+    },
+    {
+      "order": 9,
+      "id": "weekly_time",
+      "prompt": "How many hours per week can you realistically dedicate?",
+      "type": "single",
+      "options": [
+        "lt3",
+        "3_5",
+        "5_10",
+        "10_20",
+        "20_40",
+        "40_plus"
+      ]
+    },
+    {
+      "order": 10,
+      "id": "schedule",
+      "prompt": "When are those hours usually available?",
+      "type": "single",
+      "options": [
+        "before_work",
+        "after_work",
+        "weekends",
+        "daytime",
+        "flexible",
+        "changes"
+      ]
+    },
+    {
+      "order": 11,
+      "id": "learning_horizon",
+      "prompt": "How long are you willing to learn before trying to earn?",
+      "type": "single",
+      "options": [
+        "immediate",
+        "few_weeks",
+        "1_3_months",
+        "3_6_months",
+        "6_12_months",
+        "extensive"
+      ]
+    },
+    {
+      "order": 12,
+      "id": "experience_years",
+      "prompt": "How many years of professional experience do you have?",
+      "type": "single",
+      "options": [
+        "none",
+        "lt2",
+        "2_5",
+        "5_10",
+        "10_20",
+        "20_30",
+        "30_plus"
+      ]
+    },
+    {
+      "order": 13,
+      "id": "experience_areas",
+      "prompt": "Which areas do you have meaningful experience in?",
+      "type": "multi",
+      "options": [
+        "sales",
+        "customer_service",
+        "management",
+        "finance",
+        "technology",
+        "construction",
+        "healthcare",
+        "education",
+        "logistics",
+        "manufacturing",
+        "marketing",
+        "administration",
+        "hospitality",
+        "creative",
+        "legal",
+        "real_estate",
+        "transportation",
+        "retail",
+        "entrepreneurship",
+        "other",
+        "none"
+      ]
+    },
+    {
+      "order": 14,
+      "id": "help_text",
+      "prompt": "What do people already ask you for help with?",
+      "type": "text",
+      "options": []
+    },
+    {
+      "order": 15,
+      "id": "natural_activities",
+      "prompt": "Which activities feel most natural to you? Choose up to five.",
+      "type": "multi",
+      "options": [
+        "talking",
+        "selling",
+        "teaching",
+        "writing",
+        "designing",
+        "building",
+        "repairing",
+        "numbers",
+        "technology",
+        "organizing",
+        "leading",
+        "researching",
+        "problem_solving",
+        "creating_content",
+        "negotiating",
+        "working_with_hands",
+        "helping_people",
+        "analyzing_information"
+      ]
+    },
+    {
+      "order": 16,
+      "id": "forced_choices",
+      "prompt": "Which would you rather do?",
+      "type": "forced_pairs",
+      "options": [
+        "customers/computer",
+        "build/sell",
+        "technical/people",
+        "create/improve"
+      ]
+    },
+    {
+      "order": 17,
+      "id": "work_location",
+      "prompt": "Where would you prefer to work?",
+      "type": "single",
+      "options": [
+        "fully_remote",
+        "mostly_remote",
+        "hybrid",
+        "in_person",
+        "outdoors",
+        "no_preference"
+      ]
+    },
+    {
+      "order": 18,
+      "id": "economic_model_preference",
+      "prompt": "Which work model sounds more attractive?",
+      "type": "single",
+      "options": [
+        "stable_paycheck",
+        "freelancing",
+        "small_business",
+        "scalable_business",
+        "selling_products",
+        "selling_services",
+        "consulting",
+        "dont_know"
+      ]
+    },
+    {
+      "order": 19,
+      "id": "sales_comfort",
+      "prompt": "How comfortable are you with selling?",
+      "type": "scale_1_5",
+      "options": []
+    },
+    {
+      "order": 20,
+      "id": "tech_comfort",
+      "prompt": "How comfortable are you with technology?",
+      "type": "scale_1_5",
+      "options": []
+    },
+    {
+      "order": 21,
+      "id": "visibility_comfort",
+      "prompt": "How comfortable are you being visible online?",
+      "type": "scale_1_5",
+      "options": []
+    },
+    {
+      "order": 22,
+      "id": "constraints",
+      "prompt": "Which practical constraints should your plan respect?",
+      "type": "multi",
+      "options": [
+        "full_time_job",
+        "dependents",
+        "limited_transportation",
+        "limited_startup_money",
+        "limited_computer_access",
+        "limited_internet",
+        "need_work_from_home",
+        "avoid_physical_work",
+        "none"
+      ]
+    },
+    {
+      "order": 23,
+      "id": "prospecting",
+      "prompt": "Would you be willing to contact strangers or businesses to find customers?",
+      "type": "single",
+      "options": [
+        "yes",
+        "maybe",
+        "online_only",
+        "prefer_not",
+        "absolutely_not"
+      ]
+    },
+    {
+      "order": 24,
+      "id": "five_year_outcome",
+      "prompt": "Which outcome sounds most attractive five years from now?",
+      "type": "single",
+      "options": [
+        "better_paying_career",
+        "work_independently",
+        "small_business",
+        "scalable_company",
+        "remote_anywhere",
+        "financial_stability",
+        "more_free_time",
+        "meaningful_work",
+        "semi_retirement",
+        "dont_know"
+      ]
+    },
+    {
+      "order": 25,
+      "id": "primary_fear",
+      "prompt": "What scares you most about changing direction?",
+      "type": "single",
+      "options": [
+        "losing_money",
+        "wasting_time",
+        "failing",
+        "starting_too_late",
+        "choosing_wrong",
+        "not_good_enough",
+        "giving_up_stability",
+        "others_think",
+        "dont_know_where_start"
+      ]
+    },
+    {
+      "order": 26,
+      "id": "twelve_month_change",
+      "prompt": "If you could change one thing about your work or financial life over the next 12 months, what would it be?",
+      "type": "text",
+      "options": []
+    }
+  ]
+}
