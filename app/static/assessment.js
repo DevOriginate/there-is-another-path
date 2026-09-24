@@ -53,4 +53,8 @@ async function next(){
  const j=await r.json(); if(!r.ok){sel('#question').innerHTML='<div class="card"><h2>Could not build report</h2><p class="error">'+(j.detail||'Try again')+'</p></div>';return}
  location.href=j.report_url;
 }
-init();
+init().catch(err=>{
+ console.error('Assessment initialization failed',err);
+ const app=sel('#app');
+ if(app) app.innerHTML='<div class="card"><h2>Could not load your assessment</h2><p class="error">Your payment is preserved. Reload this page to try again.</p><button class="btn" onclick="location.reload()">Reload assessment</button></div>';
+});

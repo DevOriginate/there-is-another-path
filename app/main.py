@@ -60,6 +60,9 @@ async def security_headers(request: Request, call_next):
     response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
     if request.url.path.startswith('/report/'):
         response.headers['X-Robots-Tag'] = 'noindex, nofollow'
+    if request.url.path in {'/start', '/static/assessment.js', '/static/report.js'} or request.url.path.startswith('/report/'):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
     return response
 
 def page(name: str) -> FileResponse:
