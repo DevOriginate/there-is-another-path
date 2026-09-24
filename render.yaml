@@ -1,0 +1,43 @@
+services:
+  - type: web
+    name: there-is-another-path
+    runtime: python
+    region: virginia
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: DEMO_MODE
+        value: "true"
+      - key: PRODUCT_PRICE_USD
+        value: "19"
+      - key: SUPPORT_EMAIL
+        value: thereisanotherp4th@gmail.com
+      - key: REFUND_DAYS
+        value: "7"
+      - key: BILLING_LABEL
+        value: RIQUELME
+      - key: SELLER_LEGAL_NAME
+        sync: false
+      - key: ADMIN_TOKEN
+        generateValue: true
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_ID
+        sync: false
+      - key: META_PIXEL_ID
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: there-is-another-path-db
+          property: connectionString
+
+databases:
+  - name: there-is-another-path-db
+    region: virginia
+    plan: free
+    databaseName: pathfinder
+    user: pathfinder
