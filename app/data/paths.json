@@ -1,0 +1,1466 @@
+{
+  "version": "1.0.0",
+  "market_version": "US-2026-Q3-initial",
+  "paths": [
+    {
+      "id": "E01",
+      "name": "Software Development",
+      "family": "employment",
+      "description": "Build and maintain software applications and systems.",
+      "capability_requirements": {
+        "TECH": 80,
+        "ANALYTICAL": 75,
+        "ORGANIZATION": 45
+      },
+      "capability_weights": {
+        "TECH": 0.3333333333333333,
+        "ANALYTICAL": 0.3333333333333333,
+        "ORGANIZATION": 0.3333333333333333
+      },
+      "experience_tags": [
+        "EXP_TECHNOLOGY"
+      ],
+      "experience_required_years": 0,
+      "min_weekly_time": 8,
+      "capital_required": 1,
+      "risk_level": 25,
+      "learning_requirement": 75,
+      "speed_to_validation": 30,
+      "prospecting_required": 5,
+      "remote_compatibility": 80,
+      "physical_intensity": 5,
+      "work_style_targets": {
+        "REMOTE": 60,
+        "STABILITY": 85,
+        "INDEPENDENCE": 25,
+        "VISIBILITY": 20,
+        "SALES_COMFORT": 20
+      },
+      "goal_compatibility": {
+        "CAREER_CHANGE": 95,
+        "SKILL_BUILDING": 85,
+        "REMOTE_WORK": 70,
+        "STABILITY_GOAL": 90,
+        "EXTRA_INCOME": 35
+      },
+      "market_viability": 86,
+      "market_basis": "Initial U.S. MVP calibration; update with fresh labor-market and customer outcome data.",
+      "first_move": "Spend 30 minutes defining one concrete first experiment for software development and the evidence that would tell you whether to continue.",
+      "week_plan": [
+        "Understand the path and identify the minimum skill or asset needed.",
+        "Build one small proof of work or practical sample.",
+        "Put the sample, offer, or application in front of real people.",
+        "Review the response and decide whether to continue, adjust, or test another path."
+      ]
+    },
+    {
+      "id": "E02",
+      "name": "Software QA / Testing",
+      "family": "employment",
+      "description": "Test software, identify defects, and improve product quality.",
+      "capability_requirements": {
+        "TECH": 65,
+        "ANALYTICAL": 75,
+        "ORGANIZATION": 65
+      },
+      "capability_weights": {
+        "TECH": 0.3333333333333333,
+        "ANALYTICAL": 0.3333333333333333,
+        "ORGANIZATION": 0.3333333333333333
+      },
+      "experience_tags": [
+        "EXP_TECHNOLOGY",
+        "EXP_ADMINISTRATION"
+      ],
+      "experience_required_years": 0,
+      "min_weekly_time": 6,
+      "capital_required": 1,
+      "risk_level": 20,
+      "learning_requirement": 60,
+      "speed_to_validation": 45,
+      "prospecting_required": 5,
+      "remote_compatibility": 80,
+      "physical_intensity": 5,
+      "work_style_targets": {
+        "REMOTE": 60,
+        "STABILITY": 85,
+        "INDEPENDENCE": 25,
+        "VISIBILITY": 20,
+        "SALES_COMFORT": 20
+      },
+      "goal_compatibility": {
+        "CAREER_CHANGE": 95,
+        "SKILL_BUILDING": 85,
+        "REMOTE_WORK": 70,
+        "STABILITY_GOAL": 90,
+        "EXTRA_INCOME": 35
+      },
+      "market_viability": 78,
+      "market_basis": "Initial U.S. MVP calibration; update with fresh labor-market and customer outcome data.",
+      "first_move": "Spend 30 minutes defining one concrete first experiment for software qa / testing and the evidence that would tell you whether to continue.",
+      "week_plan": [
+        "Understand the path and identify the minimum skill or asset needed.",
+        "Build one small proof of work or practical sample.",
+        "Put the sample, offer, or application in front of real people.",
+        "Review the response and decide whether to continue, adjust, or test another path."
+      ]
+    },
+    {
+      "id": "E03",
+      "name": "Web Development / Digital Interfaces",
+      "family": "employment",
+      "description": "Build websites and web interfaces with technical and visual skills.",
+      "capability_requirements": {
+        "TECH": 70,
+        "ANALYTICAL": 60,
+        "CREATIVE": 50
+      },
+      "capability_weights": {
+        "TECH": 0.3333333333333333,
+        "ANALYTICAL": 0.3333333333333333,
+        "CREATIVE": 0.3333333333333333
+      },
+      "experience_tags": [
+        "EXP_TECHNOLOGY",
+        "EXP_CREATIVE"
+      ],
+      "experience_required_years": 0,
+      "min_weekly_time": 7,
+      "capital_required": 1,
+      "risk_level": 25,
+      "learning_requirement": 60,
+      "speed_to_validation": 50,
+      "prospecting_required": 10,
+      "remote_compatibility": 90,
+      "physical_intensity": 5,
+      "work_style_targets": {
+        "REMOTE": 60,
+        "STABILITY": 85,
+        "INDEPENDENCE": 25,
+        "VISIBILITY": 20,
+        "SALES_COMFORT": 20
+      },
+      "goal_compatibility": {
+        "CAREER_CHANGE": 95,
+        "SKILL_BUILDING": 85,
+        "REMOTE_WORK": 70,
+        "STABILITY_GOAL": 90,
+        "EXTRA_INCOME": 35
+      },
+      "market_viability": 75,
+      "market_basis": "Initial U.S. MVP calibration; update with fresh labor-market and customer outcome data.",
+      "first_move": "Spend 30 minutes defining one concrete first experiment for web development / digital interfaces and the evidence that would tell you whether to continue.",
+      "week_plan": [
+        "Understand the path and identify the minimum skill or asset needed.",
+        "Build one small proof of work or practical sample.",
+        "Put the sample, offer, or application in front of real people.",
+        "Review the response and decide whether to continue, adjust, or test another path."
+      ]
+    },
+    {
+      "id": "E04",
+      "name": "Cybersecurity",
+      "family": "employment",
+      "description": "Protect systems and data from digital threats.",
+      "capability_requirements": {
+        "TECH": 85,
+        "ANALYTICAL": 85,
+        "ORGANIZATION": 60
+      },
+      "capability_weights": {
+        "TECH": 0.3333333333333333,
+        "ANALYTICAL": 0.3333333333333333,
+        "ORGANIZATION": 0.3333333333333333
+      },
+      "experience_tags": [
+        "EXP_TECHNOLOGY"
+      ],
+      "experience_required_years": 0,
+      "min_weekly_time": 8,
+      "capital_required": 1,
+      "risk_level": 20,
+      "learning_requirement": 85,
+      "speed_to_validation": 30,
+      "prospecting_required": 5,
+      "remote_compatibility": 75,
+      "physical_intensity": 5,
+      "work_style_targets": {
+        "REMOTE": 60,
+        "STABILITY": 85,
+        "INDEPENDENCE": 25,
+        "VISIBILITY": 20,
+        "SALES_COMFORT": 20
+      },
+      "goal_compatibility": {
+        "CAREER_CHANGE": 95,
+        "SKILL_BUILDING": 85,
+        "REMOTE_WORK": 70,
+        "STABILITY_GOAL": 90,
+        "EXTRA_INCOME": 35
+      },
+      "market_viability": 92,
+      "market_basis": "Initial U.S. MVP calibration; update with fresh labor-market and customer outcome data.",
+      "first_move": "Spend 30 minutes defining one concrete first experiment for cybersecurity and the evidence that would tell you whether to continue.",
+      "week_plan": [
+        "Understand the path and identify the minimum skill or asset needed.",
+        "Build one small proof of work or practical sample.",
+        "Put the sample, offer, or application in front of real people.",
+        "Review the response and decide whether to continue, adjust, or test another path."
+      ]
+    },
+    {
+      "id": "E05",
+      "name": "Market Research / Marketing Analysis",
+      "family": "employment",
+      "description": "Analyze customers, markets, competitors, and performance data.",
+      "capability_requirements": {
+        "ANALYTICAL": 70,
+        "CREATIVE": 45,
+        "ORGANIZATION": 55,
+        "SALES": 35
+      },
+      "capability_weights": {
+        "ANALYTICAL": 0.25,
+        "CREATIVE": 0.25,
+        "ORGANIZATION": 0.25,
+        "SALES": 0.25
+      },
+      "experience_tags": [
+        "EXP_MARKETING",
+        "EXP_SALES",
+        "EXP_FINANCE"
+      ],
+      "experience_required_years": 0,
+      "min_weekly_time": 6,
+      "capital_required": 1,
+      "risk_level": 25,
+      "learning_requirement": 55,
+      "speed_to_validation": 50,
+      "prospecting_required": 10,
+      "remote_compatibility": 70,
+      "physical_intensity": 5,
+      "work_style_targets": {
+        "REMOTE": 60,
+        "STABILITY": 85,
+        "INDEPENDENCE": 25,
+        "VISIBILITY": 20,
+        "SALES_COMFORT": 20
+      },
+      "goal_compatibility": {
+        "CAREER_CHANGE": 95,
+        "SKILL_BUILDING": 85,
+        "REMOTE_WORK": 70,
+        "STABILITY_GOAL": 90,
+        "EXTRA_INCOME": 35
+      },
+      "market_viability": 78,
+      "market_basis": "Initial U.S. MVP calibration; update with fresh labor-market and customer outcome data.",
+      "first_move": "Spend 30 minutes defining one concrete first experiment for market research / marketing analysis and the evidence that would tell you whether to continue.",
+      "week_plan": [
+        "Understand the path and identify the minimum skill or asset needed.",
+        "Build one small proof of work or practical sample.",
+        "Put the sample, offer, or application in front of real people.",
+        "Review the response and decide whether to continue, adjust, or test another path."
+      ]
+    },
+    {
+      "id": "E06",
+      "name": "Project Management",
+      "family": "employment",
+      "description": "Coordinate people, timelines, scope, and delivery.",
+      "capability_requirements": {
+        "ORGANIZATION": 80,
+        "LEADERSHIP": 65,
+        "ANALYTICAL": 55
+      },
+      "capability_weights": {
+        "ORGANIZATION": 0.3333333333333333,
+        "LEADERSHIP": 0.3333333333333333,
+        "ANALYTICAL": 0.3333333333333333
+      },
+      "experience_tags": [
+        "EXP_MANAGEMENT",
+        "EXP_LOGISTICS",
+        "EXP_ADMINISTRATION",
+        "EXP_MANUFACTURING",
+        "EXP_TECHNOLOGY"
+      ],
+      "experience_required_years": 3,
+      "min_weekly_time": 5,
+      "capital_required": 1,
+      "risk_level": 20,
+      "learning_requirement": 45,
+      "speed_to_validation": 60,
+      "prospecting_required": 10,
+      "remote_compatibility": 65,
+      "physical_intensity": 5,
+      "work_style_targets": {
+        "REMOTE": 60,
+        "STABILITY": 85,
+        "INDEPENDENCE": 25,
+        "VISIBILITY": 20,
+        "SALES_COMFORT": 20
+      },
+      "goal_compatibility": {
+        "CAREER_CHANGE": 95,
+        "SKILL_BUILDING": 85,
+        "REMOTE_WORK": 70,
+        "STABILITY_GOAL": 90,
+        "EXTRA_INCOME": 35
+      },
+      "market_viability": 82,
+      "market_basis": "Initial U.S. MVP calibration; update with fresh labor-market and customer outcome data.",
+      "first_move": "Spend 30 minutes defining one concrete first experiment for project management and the evidence that would tell you whether to continue.",
+      "week_plan": [
+        "Understand the path and identify the minimum skill or asset needed.",
+        "Build one small proof of work or practical sample.",
+        "Put the sample, offer, or application in front of real people.",
+        "Review the response and decide whether to continue, adjust, or test another path."
+      ]
+    },
+    {
+      "id": "E07",
+      "name": "Training & Development",
+      "family": "employment",
+      "description": "Design and deliver learning programs inside organizations.",
+      "capability_requirements": {
+        "TEACHING": 80,
+        "ORGANIZATION": 60,
+        "LEADERSHIP": 45
+      },
+      "capability_weights": {
+        "TEACHING": 0.3333333333333333,
+        "ORGANIZATION": 0.3333333333333333,
+        "LEADERSHIP": 0.3333333333333333
+      },
+      "experience_tags": [
+        "EXP_EDUCATION",
+        "EXP_MANAGEMENT",
+        "EXP_HUMAN_RESOURCES"
+      ],
+      "experience_required_years": 2,
+      "min_weekly_time": 5,
+      "capital_required": 1,
+      "risk_level": 20,
+      "learning_requirement": 45,
+      "speed_to_validation": 60,
+      "prospecting_required": 10,
+      "remote_compatibility": 65,
+      "physical_intensity": 5,
+      "work_style_targets": {
+        "REMOTE": 60,
+        "STABILITY": 85,
+        "INDEPENDENCE": 25,
+        "VISIBILITY": 20,
+        "SALES_COMFORT": 20
+      },
+      "goal_compatibility": {
+        "CAREER_CHANGE": 95,
+        "SKILL_BUILDING": 85,
+        "REMOTE_WORK": 70,
+        "STABILITY_GOAL": 90,
+        "EXTRA_INCOME": 35
+      },
+      "market_viability": 80,
+      "market_basis": "Initial U.S. MVP calibration; update with fresh labor-market and customer outcome data.",
+      "first_move": "Spend 30 minutes defining one concrete first experiment for training & development and the evidence that would tell you whether to continue.",
+      "week_plan": [
+        "Understand the path and identify the minimum skill or asset needed.",
+        "Build one small proof of work or practical sample.",
+        "Put the sample, offer, or application in front of real people.",
+        "Review the response and decide whether to continue, adjust, or test another path."
+      ]
+    },
+    {
+      "id": "E08",
+      "name": "B2B Sales",
+      "family": "employment",
+      "description": "Sell products or services to business customers.",
+      "capability_requirements": {
+        "SALES": 80,
+        "ORGANIZATION": 45,
+        "ANALYTICAL": 40
+      },
+      "capability_weights": {
+        "SALES": 0.3333333333333333,
+        "ORGANIZATION": 0.3333333333333333,
+        "ANALYTICAL": 0.3333333333333333
+      },
+      "experience_tags": [
+        "EXP_SALES",
+        "EXP_CUSTOMER_SERVICE",
+        "EXP_RETAIL"
+      ],
+      "experience_required_years": 0,
+      "min_weekly_time": 5,
+      "capital_required": 0,
+      "risk_level": 30,
+      "learning_requirement": 35,
+      "speed_to_validation": 75,
+      "prospecting_required": 40,
+      "remote_compatibility": 65,
+      "physical_intensity": 5,
+      "work_style_targets": {
+        "REMOTE": 60,
+        "STABILITY": 85,
+        "INDEPENDENCE": 25,
+        "VISIBILITY": 20,
+        "SALES_COMFORT": 20
+      },
+      "goal_compatibility": {
+        "CAREER_CHANGE": 95,
+        "SKILL_BUILDING": 85,
+        "REMOTE_WORK": 70,
+        "STABILITY_GOAL": 90,
+        "EXTRA_INCOME": 35
+      },
+      "market_viability": 82,
+      "market_basis": "Initial U.S. MVP calibration; update with fresh labor-market and customer outcome data.",
+      "first_move": "Spend 30 minutes defining one concrete first experiment for b2b sales and the evidence that would tell you whether to continue.",
+      "week_plan": [
+        "Understand the path and identify the minimum skill or asset needed.",
+        "Build one small proof of work or practical sample.",
+        "Put the sample, offer, or application in front of real people.",
+        "Review the response and decide whether to continue, adjust, or test another path."
+      ]
+    },
+    {
+      "id": "E09",
+      "name": "Business / Operations Analyst",
+      "family": "employment",
+      "description": "Improve business processes using analysis, systems, and operational insight.",
+      "capability_requirements": {
+        "ANALYTICAL": 80,
+        "ORGANIZATION": 75,
+        "TECH": 50
+      },
+      "capability_weights": {
+        "ANALYTICAL": 0.3333333333333333,
+        "ORGANIZATION": 0.3333333333333333,
+        "TECH": 0.3333333333333333
+      },
+      "experience_tags": [
+        "EXP_MANAGEMENT",
+        "EXP_LOGISTICS",
+        "EXP_ADMINISTRATION",
+        "EXP_FINANCE"
+      ],
+      "experience_required_years": 2,
+      "min_weekly_time": 6,
+      "capital_required": 1,
+      "risk_level": 20,
+      "learning_requirement": 55,
+      "speed_to_validation": 55,
+      "prospecting_required": 10,
+      "remote_compatibility": 70,
+      "physical_intensity": 5,
+      "work_style_targets": {
+        "REMOTE": 60,
+        "STABILITY": 85,
+        "INDEPENDENCE": 25,
+        "VISIBILITY": 20,
+        "SALES_COMFORT": 20
+      },
+      "goal_compatibility": {
+        "CAREER_CHANGE": 95,
+        "SKILL_BUILDING": 85,
+        "REMOTE_WORK": 70,
+        "STABILITY_GOAL": 90,
+        "EXTRA_INCOME": 35
+      },
+      "market_viability": 80,
+      "market_basis": "Initial U.S. MVP calibration; update with fresh labor-market and customer outcome data.",
+      "first_move": "Spend 30 minutes defining one concrete first experiment for business / operations analyst and the evidence that would tell you whether to continue.",
+      "week_plan": [
+        "Understand the path and identify the minimum skill or asset needed.",
+        "Build one small proof of work or practical sample.",
+        "Put the sample, offer, or application in front of real people.",
+        "Review the response and decide whether to continue, adjust, or test another path."
+      ]
+    },
+    {
+      "id": "F01",
+      "name": "Freelance Web Design",
+      "family": "freelance",
+      "description": "Design and build websites directly for clients.",
+      "capability_requirements": {
+        "TECH": 65,
+        "CREATIVE": 70,
+        "SALES": 50
+      },
+      "capability_weights": {
+        "TECH": 0.3333333333333333,
+        "CREATIVE": 0.3333333333333333,
+        "SALES": 0.3333333333333333
+      },
+      "experience_tags": [
+        "EXP_TECHNOLOGY",
+        "EXP_CREATIVE"
+      ],
+      "experience_required_years": 0,
+      "min_weekly_time": 7,
+      "capital_required": 1,
+      "risk_level": 45,
+      "learning_requirement": 50,
+      "speed_to_validation": 70,
+      "prospecting_required": 60,
+      "remote_compatibility": 100,
+      "physical_intensity": 5,
+      "work_style_targets": {
+        "REMOTE": 95,
+        "STABILITY": 25,
+        "INDEPENDENCE": 90,
+        "VISIBILITY": 25,
+        "SALES_COMFORT": 55
+      },
+      "goal_compatibility": {
+        "EXTRA_INCOME": 95,
+        "SELF_EMPLOYMENT": 100,
+        "REMOTE_WORK": 100,
+        "CAREER_CHANGE": 65,
+        "ENTREPRENEURSHIP": 55
+      },
+      "market_viability": 76,
+      "market_basis": "Initial U.S. MVP calibration; update with fresh labor-market and customer outcome data.",
+      "first_move": "Spend 30 minutes defining one concrete first experiment for freelance web design and the evidence that would tell you whether to continue.",
+      "week_plan": [
+        "Understand the path and identify the minimum skill or asset needed.",
+        "Build one small proof of work or practical sample.",
+        "Put the sample, offer, or application in front of real people.",
+        "Review the response and decide whether to continue, adjust, or test another path."
+      ]
+    },
+    {
+      "id": "F02",
+      "name": "Video Editing",
+      "family": "freelance",
+      "description": "Edit short-form, long-form, or commercial video for clients.",
+      "capability_requirements": {
+        "CREATIVE": 80,
+        "TECH": 55,
+        "ORGANIZATION": 50
+      },
+      "capability_weights": {
+        "CREATIVE": 0.3333333333333333,
+        "TECH": 0.3333333333333333,
+        "ORGANIZATION": 0.3333333333333333
+      },
+      "experience_tags": [
+        "EXP_CREATIVE",
+        "EXP_MARKETING"
+      ],
+      "experience_required_years": 0,
+      "min_weekly_time": 6,
+      "capital_required": 1,
+      "risk_level": 40,
+      "learning_requirement": 45,
+      "speed_to_validation": 70,
+      "prospecting_required": 50,
+      "remote_compatibility": 100,
+      "physical_intensity": 5,
+      "work_style_targets": {
+        "REMOTE": 95,
+        "STABILITY": 25,
+        "INDEPENDENCE": 90,
+        "VISIBILITY": 25,
+        "SALES_COMFORT": 55
+      },
+      "goal_compatibility": {
+        "EXTRA_INCOME": 95,
+        "SELF_EMPLOYMENT": 100,
+        "REMOTE_WORK": 100,
+        "CAREER_CHANGE": 65,
+        "ENTREPRENEURSHIP": 55
+      },
+      "market_viability": 74,
+      "market_basis": "Initial U.S. MVP calibration; update with fresh labor-market and customer outcome data.",
+      "first_move": "Spend 30 minutes defining one concrete first experiment for video editing and the evidence that would tell you whether to continue.",
+      "week_plan": [
+        "Understand the path and identify the minimum skill or asset needed.",
+        "Build one small proof of work or practical sample.",
+        "Put the sample, offer, or application in front of real people.",
+        "Review the response and decide whether to continue, adjust, or test another path."
+      ]
+    },
+    {
+      "id": "F03",
+      "name": "Copywriting / Email Marketing",
+      "family": "freelance",
+      "description": "Write persuasive marketing and sales content for clients.",
+      "capability_requirements": {
+        "CREATIVE": 70,
+        "SALES": 65,
+        "ANALYTICAL": 50
+      },
+      "capability_weights": {
+        "CREATIVE": 0.3333333333333333,
+        "SALES": 0.3333333333333333,
+        "ANALYTICAL": 0.3333333333333333
+      },
+      "experience_tags": [
+        "EXP_MARKETING",
+        "EXP_SALES",
+        "EXP_CREATIVE"
+      ],
+      "experience_required_years": 0,
+      "min_weekly_time": 5,
+      "capital_required": 0,
+      "risk_level": 40,
+      "learning_requirement": 45,
+      "speed_to_validation": 70,
+      "prospecting_required": 55,
+      "remote_compatibility": 100,
+      "physical_intensity": 5,
+      "work_style_targets": {
+        "REMOTE": 95,
+        "STABILITY": 25,
+        "INDEPENDENCE": 90,
+        "VISIBILITY": 25,
+        "SALES_COMFORT": 55
+      },
+      "goal_compatibility": {
+        "EXTRA_INCOME": 95,
+        "SELF_EMPLOYMENT": 100,
+        "REMOTE_WORK": 100,
+        "CAREER_CHANGE": 65,
+        "ENTREPRENEURSHIP": 55
+      },
+      "market_viability": 73,
+      "market_basis": "Initial U.S. MVP calibration; update with fresh labor-market and customer outcome data.",
+      "first_move": "Spend 30 minutes defining one concrete first experiment for copywriting / email marketing and the evidence that would tell you whether to continue.",
+      "week_plan": [
+        "Understand the path and identify the minimum skill or asset needed.",
+        "Build one small proof of work or practical sample.",
+        "Put the sample, offer, or application in front of real people.",
+        "Review the response and decide whether to continue, adjust, or test another path."
+      ]
+    },
+    {
+      "id": "F04",
+      "name": "Social Content Specialist",
+      "family": "freelance",
+      "description": "Create and manage social content for businesses or creators.",
+      "capability_requirements": {
+        "CREATIVE": 75,
+        "ORGANIZATION": 60,
+        "SALES": 45
+      },
+      "capability_weights": {
+        "CREATIVE": 0.3333333333333333,
+        "ORGANIZATION": 0.3333333333333333,
+        "SALES": 0.3333333333333333
+      },
+      "experience_tags": [
+        "EXP_MARKETING",
+        "EXP_CREATIVE"
+      ],
+      "experience_required_years": 0,
+      "min_weekly_time": 5,
+      "capital_required": 0,
+      "risk_level": 40,
+      "learning_requirement": 40,
+      "speed_to_validation": 75,
+      "prospecting_required": 55,
+      "remote_compatibility": 100,
+      "physical_intensity": 5,
+      "work_style_targets": {
+        "REMOTE": 95,
+        "STABILITY": 25,
+        "INDEPENDENCE": 90,
+        "VISIBILITY": 25,
+        "SALES_COMFORT": 55
+      },
+      "goal_compatibility": {
+        "EXTRA_INCOME": 95,
+        "SELF_EMPLOYMENT": 100,
+        "REMOTE_WORK": 100,
+        "CAREER_CHANGE": 65,
+        "ENTREPRENEURSHIP": 55
+      },
+      "market_viability": 72,
+      "market_basis": "Initial U.S. MVP calibration; update with fresh labor-market and customer outcome data.",
+      "first_move": "Spend 30 minutes defining one concrete first experiment for social content specialist and the evidence that would tell you whether to continue.",
+      "week_plan": [
+        "Understand the path and identify the minimum skill or asset needed.",
+        "Build one small proof of work or practical sample.",
+        "Put the sample, offer, or application in front of real people.",
+        "Review the response and decide whether to continue, adjust, or test another path."
+      ]
+    },
+    {
+      "id": "F05",
+      "name": "Graphic / Brand Design",
+      "family": "freelance",
+      "description": "Create visual identities and marketing assets for clients.",
+      "capability_requirements": {
+        "CREATIVE": 85,
+        "TECH": 45,
+        "ORGANIZATION": 45
+      },
+      "capability_weights": {
+        "CREATIVE": 0.3333333333333333,
+        "TECH": 0.3333333333333333,
+        "ORGANIZATION": 0.3333333333333333
+      },
+      "experience_tags": [
+        "EXP_CREATIVE",
+        "EXP_MARKETING"
+      ],
+      "experience_required_years": 0,
+      "min_weekly_time": 6,
+      "capital_required": 1,
+      "risk_level": 40,
+      "learning_requirement": 55,
+      "speed_to_validation": 65,
+      "prospecting_required": 50,
+      "remote_compatibility": 100,
+      "physical_intensity": 5,
+      "work_style_targets": {
+        "REMOTE": 95,
+        "STABILITY": 25,
+        "INDEPENDENCE": 90,
+        "VISIBILITY": 25,
+        "SALES_COMFORT": 55
+      },
+      "goal_compatibility": {
+        "EXTRA_INCOME": 95,
+        "SELF_EMPLOYMENT": 100,
+        "REMOTE_WORK": 100,
+        "CAREER_CHANGE": 65,
+        "ENTREPRENEURSHIP": 55
+      },
+      "market_viability": 72,
+      "market_basis": "Initial U.S. MVP calibration; update with fresh labor-market and customer outcome data.",
+      "first_move": "Spend 30 minutes defining one concrete first experiment for graphic / brand design and the evidence that would tell you whether to continue.",
+      "week_plan": [
+        "Understand the path and identify the minimum skill or asset needed.",
+        "Build one small proof of work or practical sample.",
+        "Put the sample, offer, or application in front of real people.",
+        "Review the response and decide whether to continue, adjust, or test another path."
+      ]
+    },
+    {
+      "id": "F06",
+      "name": "AI / No-Code Automation Freelancer",
+      "family": "freelance",
+      "description": "Build practical automations for businesses using AI and no-code tools.",
+      "capability_requirements": {
+        "TECH": 75,
+        "ANALYTICAL": 70,
+        "SALES": 60,
+        "ORGANIZATION": 55
+      },
+      "capability_weights": {
+        "TECH": 0.25,
+        "ANALYTICAL": 0.25,
+        "SALES": 0.25,
+        "ORGANIZATION": 0.25
+      },
+      "experience_tags": [
+        "EXP_TECHNOLOGY",
+        "EXP_ADMINISTRATION",
+        "EXP_ENTREPRENEURSHIP"
+      ],
+      "experience_required_years": 0,
+      "min_weekly_time": 7,
+      "capital_required": 1,
+      "risk_level": 55,
+      "learning_requirement": 45,
+      "speed_to_validation": 80,
+      "prospecting_required": 60,
+      "remote_compatibility": 100,
+      "physical_intensity": 5,
+      "work_style_targets": {
+        "REMOTE": 95,
+        "STABILITY": 25,
+        "INDEPENDENCE": 90,
+        "VISIBILITY": 25,
+        "SALES_COMFORT": 55
+      },
+      "goal_compatibility": {
+        "EXTRA_INCOME": 95,
+        "SELF_EMPLOYMENT": 100,
+        "REMOTE_WORK": 100,
+        "CAREER_CHANGE": 65,
+        "ENTREPRENEURSHIP": 55
+      },
+      "market_viability": 84,
+      "market_basis": "Initial U.S. MVP calibration; update with fresh labor-market and customer outcome data.",
+      "first_move": "Spend 30 minutes defining one concrete first experiment for ai / no-code automation freelancer and the evidence that would tell you whether to continue.",
+      "week_plan": [
+        "Understand the path and identify the minimum skill or asset needed.",
+        "Build one small proof of work or practical sample.",
+        "Put the sample, offer, or application in front of real people.",
+        "Review the response and decide whether to continue, adjust, or test another path."
+      ]
+    },
+    {
+      "id": "F07",
+      "name": "Lead Generation / Appointment Setting",
+      "family": "freelance",
+      "description": "Find prospects and book qualified conversations for businesses.",
+      "capability_requirements": {
+        "SALES": 80,
+        "ORGANIZATION": 55,
+        "ANALYTICAL": 40
+      },
+      "capability_weights": {
+        "SALES": 0.3333333333333333,
+        "ORGANIZATION": 0.3333333333333333,
+        "ANALYTICAL": 0.3333333333333333
+      },
+      "experience_tags": [
+        "EXP_SALES",
+        "EXP_CUSTOMER_SERVICE",
+        "EXP_MARKETING"
+      ],
+      "experience_required_years": 0,
+      "min_weekly_time": 5,
+      "capital_required": 0,
+      "risk_level": 45,
+      "learning_requirement": 30,
+      "speed_to_validation": 90,
+      "prospecting_required": 85,
+      "remote_compatibility": 100,
+      "physical_intensity": 5,
+      "work_style_targets": {
+        "REMOTE": 95,
+        "STABILITY": 25,
+        "INDEPENDENCE": 90,
+        "VISIBILITY": 25,
+        "SALES_COMFORT": 55
+      },
+      "goal_compatibility": {
+        "EXTRA_INCOME": 95,
+        "SELF_EMPLOYMENT": 100,
+        "REMOTE_WORK": 100,
+        "CAREER_CHANGE": 65,
+        "ENTREPRENEURSHIP": 55
+      },
+      "market_viability": 78,
+      "market_basis": "Initial U.S. MVP calibration; update with fresh labor-market and customer outcome data.",
+      "first_move": "Spend 30 minutes defining one concrete first experiment for lead generation / appointment setting and the evidence that would tell you whether to continue.",
+      "week_plan": [
+        "Understand the path and identify the minimum skill or asset needed.",
+        "Build one small proof of work or practical sample.",
+        "Put the sample, offer, or application in front of real people.",
+        "Review the response and decide whether to continue, adjust, or test another path."
+      ]
+    },
+    {
+      "id": "F08",
+      "name": "CRM / Business Operations Freelancer",
+      "family": "freelance",
+      "description": "Help small businesses organize CRM, pipelines, and operating workflows.",
+      "capability_requirements": {
+        "ORGANIZATION": 80,
+        "ANALYTICAL": 70,
+        "TECH": 55,
+        "SALES": 45
+      },
+      "capability_weights": {
+        "ORGANIZATION": 0.25,
+        "ANALYTICAL": 0.25,
+        "TECH": 0.25,
+        "SALES": 0.25
+      },
+      "experience_tags": [
+        "EXP_ADMINISTRATION",
+        "EXP_MANAGEMENT",
+        "EXP_LOGISTICS",
+        "EXP_SALES"
+      ],
+      "experience_required_years": 2,
+      "min_weekly_time": 6,
+      "capital_required": 1,
+      "risk_level": 40,
+      "learning_requirement": 40,
+      "speed_to_validation": 80,
+      "prospecting_required": 55,
+      "remote_compatibility": 100,
+      "physical_intensity": 5,
+      "work_style_targets": {
+        "REMOTE": 95,
+        "STABILITY": 25,
+        "INDEPENDENCE": 90,
+        "VISIBILITY": 25,
+        "SALES_COMFORT": 55
+      },
+      "goal_compatibility": {
+        "EXTRA_INCOME": 95,
+        "SELF_EMPLOYMENT": 100,
+        "REMOTE_WORK": 100,
+        "CAREER_CHANGE": 65,
+        "ENTREPRENEURSHIP": 55
+      },
+      "market_viability": 80,
+      "market_basis": "Initial U.S. MVP calibration; update with fresh labor-market and customer outcome data.",
+      "first_move": "Spend 30 minutes defining one concrete first experiment for crm / business operations freelancer and the evidence that would tell you whether to continue.",
+      "week_plan": [
+        "Understand the path and identify the minimum skill or asset needed.",
+        "Build one small proof of work or practical sample.",
+        "Put the sample, offer, or application in front of real people.",
+        "Review the response and decide whether to continue, adjust, or test another path."
+      ]
+    },
+    {
+      "id": "S01",
+      "name": "Local Lead Generation Service",
+      "family": "service_business",
+      "description": "Generate leads for local service businesses.",
+      "capability_requirements": {
+        "SALES": 75,
+        "ANALYTICAL": 60,
+        "TECH": 45,
+        "ORGANIZATION": 55
+      },
+      "capability_weights": {
+        "SALES": 0.25,
+        "ANALYTICAL": 0.25,
+        "TECH": 0.25,
+        "ORGANIZATION": 0.25
+      },
+      "experience_tags": [
+        "EXP_MARKETING",
+        "EXP_SALES",
+        "EXP_ENTREPRENEURSHIP"
+      ],
+      "experience_required_years": 0,
+      "min_weekly_time": 7,
+      "capital_required": 2,
+      "risk_level": 65,
+      "learning_requirement": 45,
+      "speed_to_validation": 75,
+      "prospecting_required": 80,
+      "remote_compatibility": 95,
+      "physical_intensity": 5,
+      "work_style_targets": {
+        "REMOTE": 55,
+        "STABILITY": 15,
+        "INDEPENDENCE": 100,
+        "VISIBILITY": 25,
+        "SALES_COMFORT": 70
+      },
+      "goal_compatibility": {
+        "EXTRA_INCOME": 90,
+        "SELF_EMPLOYMENT": 100,
+        "ENTREPRENEURSHIP": 100,
+        "LONG_TERM_WEALTH": 75,
+        "REMOTE_WORK": 55
+      },
+      "market_viability": 80,
+      "market_basis": "Initial U.S. MVP calibration; update with fresh labor-market and customer outcome data.",
+      "first_move": "Spend 30 minutes defining one concrete first experiment for local lead generation service and the evidence that would tell you whether to continue.",
+      "week_plan": [
+        "Understand the path and identify the minimum skill or asset needed.",
+        "Build one small proof of work or practical sample.",
+        "Put the sample, offer, or application in front of real people.",
+        "Review the response and decide whether to continue, adjust, or test another path."
+      ]
+    },
+    {
+      "id": "S02",
+      "name": "Website + Local Digital Presence Service",
+      "family": "service_business",
+      "description": "Sell websites and local digital presence improvements to small businesses.",
+      "capability_requirements": {
+        "TECH": 65,
+        "CREATIVE": 55,
+        "SALES": 65,
+        "ORGANIZATION": 50
+      },
+      "capability_weights": {
+        "TECH": 0.25,
+        "CREATIVE": 0.25,
+        "SALES": 0.25,
+        "ORGANIZATION": 0.25
+      },
+      "experience_tags": [
+        "EXP_TECHNOLOGY",
+        "EXP_MARKETING",
+        "EXP_SALES"
+      ],
+      "experience_required_years": 0,
+      "min_weekly_time": 7,
+      "capital_required": 1,
+      "risk_level": 60,
+      "learning_requirement": 50,
+      "speed_to_validation": 75,
+      "prospecting_required": 75,
+      "remote_compatibility": 95,
+      "physical_intensity": 5,
+      "work_style_targets": {
+        "REMOTE": 55,
+        "STABILITY": 15,
+        "INDEPENDENCE": 100,
+        "VISIBILITY": 25,
+        "SALES_COMFORT": 70
+      },
+      "goal_compatibility": {
+        "EXTRA_INCOME": 90,
+        "SELF_EMPLOYMENT": 100,
+        "ENTREPRENEURSHIP": 100,
+        "LONG_TERM_WEALTH": 75,
+        "REMOTE_WORK": 55
+      },
+      "market_viability": 82,
+      "market_basis": "Initial U.S. MVP calibration; update with fresh labor-market and customer outcome data.",
+      "first_move": "Spend 30 minutes defining one concrete first experiment for website + local digital presence service and the evidence that would tell you whether to continue.",
+      "week_plan": [
+        "Understand the path and identify the minimum skill or asset needed.",
+        "Build one small proof of work or practical sample.",
+        "Put the sample, offer, or application in front of real people.",
+        "Review the response and decide whether to continue, adjust, or test another path."
+      ]
+    },
+    {
+      "id": "S03",
+      "name": "AI Automation for Small Business",
+      "family": "service_business",
+      "description": "Implement AI-assisted workflows and automations for small businesses.",
+      "capability_requirements": {
+        "TECH": 80,
+        "ANALYTICAL": 75,
+        "SALES": 65,
+        "ORGANIZATION": 60
+      },
+      "capability_weights": {
+        "TECH": 0.25,
+        "ANALYTICAL": 0.25,
+        "SALES": 0.25,
+        "ORGANIZATION": 0.25
+      },
+      "experience_tags": [
+        "EXP_TECHNOLOGY",
+        "EXP_ADMINISTRATION",
+        "EXP_ENTREPRENEURSHIP"
+      ],
+      "experience_required_years": 0,
+      "min_weekly_time": 8,
+      "capital_required": 2,
+      "risk_level": 65,
+      "learning_requirement": 55,
+      "speed_to_validation": 75,
+      "prospecting_required": 75,
+      "remote_compatibility": 100,
+      "physical_intensity": 5,
+      "work_style_targets": {
+        "REMOTE": 55,
+        "STABILITY": 15,
+        "INDEPENDENCE": 100,
+        "VISIBILITY": 25,
+        "SALES_COMFORT": 70
+      },
+      "goal_compatibility": {
+        "EXTRA_INCOME": 90,
+        "SELF_EMPLOYMENT": 100,
+        "ENTREPRENEURSHIP": 100,
+        "LONG_TERM_WEALTH": 75,
+        "REMOTE_WORK": 55
+      },
+      "market_viability": 86,
+      "market_basis": "Initial U.S. MVP calibration; update with fresh labor-market and customer outcome data.",
+      "first_move": "Spend 30 minutes defining one concrete first experiment for ai automation for small business and the evidence that would tell you whether to continue.",
+      "week_plan": [
+        "Understand the path and identify the minimum skill or asset needed.",
+        "Build one small proof of work or practical sample.",
+        "Put the sample, offer, or application in front of real people.",
+        "Review the response and decide whether to continue, adjust, or test another path."
+      ]
+    },
+    {
+      "id": "S04",
+      "name": "Specialized Bookkeeping Service",
+      "family": "service_business",
+      "description": "Provide bookkeeping and financial organization services for small businesses.",
+      "capability_requirements": {
+        "ANALYTICAL": 75,
+        "ORGANIZATION": 85,
+        "SALES": 45
+      },
+      "capability_weights": {
+        "ANALYTICAL": 0.3333333333333333,
+        "ORGANIZATION": 0.3333333333333333,
+        "SALES": 0.3333333333333333
+      },
+      "experience_tags": [
+        "EXP_FINANCE",
+        "EXP_ADMINISTRATION"
+      ],
+      "experience_required_years": 2,
+      "min_weekly_time": 6,
+      "capital_required": 1,
+      "risk_level": 45,
+      "learning_requirement": 60,
+      "speed_to_validation": 65,
+      "prospecting_required": 55,
+      "remote_compatibility": 90,
+      "physical_intensity": 5,
+      "work_style_targets": {
+        "REMOTE": 55,
+        "STABILITY": 15,
+        "INDEPENDENCE": 100,
+        "VISIBILITY": 25,
+        "SALES_COMFORT": 70
+      },
+      "goal_compatibility": {
+        "EXTRA_INCOME": 90,
+        "SELF_EMPLOYMENT": 100,
+        "ENTREPRENEURSHIP": 100,
+        "LONG_TERM_WEALTH": 75,
+        "REMOTE_WORK": 55
+      },
+      "market_viability": 74,
+      "market_basis": "Initial U.S. MVP calibration; update with fresh labor-market and customer outcome data.",
+      "first_move": "Spend 30 minutes defining one concrete first experiment for specialized bookkeeping service and the evidence that would tell you whether to continue.",
+      "week_plan": [
+        "Understand the path and identify the minimum skill or asset needed.",
+        "Build one small proof of work or practical sample.",
+        "Put the sample, offer, or application in front of real people.",
+        "Review the response and decide whether to continue, adjust, or test another path."
+      ]
+    },
+    {
+      "id": "S05",
+      "name": "Local Service Business",
+      "family": "service_business",
+      "description": "Build a practical local service business around recurring demand.",
+      "capability_requirements": {
+        "HANDS_ON": 65,
+        "ORGANIZATION": 55,
+        "SALES": 50
+      },
+      "capability_weights": {
+        "HANDS_ON": 0.3333333333333333,
+        "ORGANIZATION": 0.3333333333333333,
+        "SALES": 0.3333333333333333
+      },
+      "experience_tags": [
+        "EXP_CONSTRUCTION",
+        "EXP_HOSPITALITY",
+        "EXP_RETAIL",
+        "EXP_ENTREPRENEURSHIP"
+      ],
+      "experience_required_years": 0,
+      "min_weekly_time": 6,
+      "capital_required": 2,
+      "risk_level": 60,
+      "learning_requirement": 35,
+      "speed_to_validation": 85,
+      "prospecting_required": 55,
+      "remote_compatibility": 5,
+      "physical_intensity": 80,
+      "work_style_targets": {
+        "REMOTE": 55,
+        "STABILITY": 15,
+        "INDEPENDENCE": 100,
+        "VISIBILITY": 25,
+        "SALES_COMFORT": 70
+      },
+      "goal_compatibility": {
+        "EXTRA_INCOME": 90,
+        "SELF_EMPLOYMENT": 100,
+        "ENTREPRENEURSHIP": 100,
+        "LONG_TERM_WEALTH": 75,
+        "REMOTE_WORK": 55
+      },
+      "market_viability": 74,
+      "market_basis": "Initial U.S. MVP calibration; update with fresh labor-market and customer outcome data.",
+      "first_move": "Spend 30 minutes defining one concrete first experiment for local service business and the evidence that would tell you whether to continue.",
+      "week_plan": [
+        "Understand the path and identify the minimum skill or asset needed.",
+        "Build one small proof of work or practical sample.",
+        "Put the sample, offer, or application in front of real people.",
+        "Review the response and decide whether to continue, adjust, or test another path."
+      ]
+    },
+    {
+      "id": "S06",
+      "name": "Mobile Detailing",
+      "family": "service_business",
+      "description": "Provide on-location vehicle cleaning and detailing services.",
+      "capability_requirements": {
+        "HANDS_ON": 75,
+        "ORGANIZATION": 55,
+        "SALES": 50
+      },
+      "capability_weights": {
+        "HANDS_ON": 0.3333333333333333,
+        "ORGANIZATION": 0.3333333333333333,
+        "SALES": 0.3333333333333333
+      },
+      "experience_tags": [
+        "EXP_TRANSPORTATION",
+        "EXP_HOSPITALITY",
+        "EXP_RETAIL",
+        "EXP_ENTREPRENEURSHIP"
+      ],
+      "experience_required_years": 0,
+      "min_weekly_time": 6,
+      "capital_required": 3,
+      "risk_level": 65,
+      "learning_requirement": 35,
+      "speed_to_validation": 80,
+      "prospecting_required": 55,
+      "remote_compatibility": 5,
+      "physical_intensity": 90,
+      "work_style_targets": {
+        "REMOTE": 55,
+        "STABILITY": 15,
+        "INDEPENDENCE": 100,
+        "VISIBILITY": 25,
+        "SALES_COMFORT": 70
+      },
+      "goal_compatibility": {
+        "EXTRA_INCOME": 90,
+        "SELF_EMPLOYMENT": 100,
+        "ENTREPRENEURSHIP": 100,
+        "LONG_TERM_WEALTH": 75,
+        "REMOTE_WORK": 55
+      },
+      "market_viability": 70,
+      "market_basis": "Initial U.S. MVP calibration; update with fresh labor-market and customer outcome data.",
+      "first_move": "Spend 30 minutes defining one concrete first experiment for mobile detailing and the evidence that would tell you whether to continue.",
+      "week_plan": [
+        "Understand the path and identify the minimum skill or asset needed.",
+        "Build one small proof of work or practical sample.",
+        "Put the sample, offer, or application in front of real people.",
+        "Review the response and decide whether to continue, adjust, or test another path."
+      ]
+    },
+    {
+      "id": "K01",
+      "name": "Expertise-Based Consulting",
+      "family": "knowledge",
+      "description": "Turn deep professional experience into specialized advisory services.",
+      "capability_requirements": {
+        "TEACHING": 65,
+        "ANALYTICAL": 65,
+        "SALES": 60,
+        "LEADERSHIP": 55
+      },
+      "capability_weights": {
+        "TEACHING": 0.25,
+        "ANALYTICAL": 0.25,
+        "SALES": 0.25,
+        "LEADERSHIP": 0.25
+      },
+      "experience_tags": [
+        "EXP_MANAGEMENT",
+        "EXP_LOGISTICS",
+        "EXP_MANUFACTURING",
+        "EXP_HEALTHCARE",
+        "EXP_FINANCE",
+        "EXP_TECHNOLOGY",
+        "EXP_CONSTRUCTION",
+        "EXP_ADMINISTRATION",
+        "EXP_SALES",
+        "EXP_ENTREPRENEURSHIP"
+      ],
+      "experience_required_years": 8,
+      "min_weekly_time": 5,
+      "capital_required": 0,
+      "risk_level": 55,
+      "learning_requirement": 35,
+      "speed_to_validation": 80,
+      "prospecting_required": 70,
+      "remote_compatibility": 100,
+      "physical_intensity": 5,
+      "work_style_targets": {
+        "REMOTE": 80,
+        "STABILITY": 25,
+        "INDEPENDENCE": 95,
+        "VISIBILITY": 50,
+        "SALES_COMFORT": 60
+      },
+      "goal_compatibility": {
+        "EXPERIENCE_MONETIZATION": 100,
+        "SELF_EMPLOYMENT": 90,
+        "EXTRA_INCOME": 80,
+        "PURPOSE": 85,
+        "LONG_TERM_WEALTH": 65
+      },
+      "market_viability": 84,
+      "market_basis": "Initial U.S. MVP calibration; update with fresh labor-market and customer outcome data.",
+      "first_move": "Spend 30 minutes defining one concrete first experiment for expertise-based consulting and the evidence that would tell you whether to continue.",
+      "week_plan": [
+        "Understand the path and identify the minimum skill or asset needed.",
+        "Build one small proof of work or practical sample.",
+        "Put the sample, offer, or application in front of real people.",
+        "Review the response and decide whether to continue, adjust, or test another path."
+      ]
+    },
+    {
+      "id": "K02",
+      "name": "Professional Tutoring / Training",
+      "family": "knowledge",
+      "description": "Teach a professional, academic, technical, or practical skill directly.",
+      "capability_requirements": {
+        "TEACHING": 80,
+        "ORGANIZATION": 55,
+        "SALES": 40
+      },
+      "capability_weights": {
+        "TEACHING": 0.3333333333333333,
+        "ORGANIZATION": 0.3333333333333333,
+        "SALES": 0.3333333333333333
+      },
+      "experience_tags": [
+        "EXP_EDUCATION",
+        "EXP_TECHNOLOGY",
+        "EXP_FINANCE",
+        "EXP_HEALTHCARE",
+        "EXP_CONSTRUCTION",
+        "EXP_MANAGEMENT"
+      ],
+      "experience_required_years": 2,
+      "min_weekly_time": 4,
+      "capital_required": 0,
+      "risk_level": 35,
+      "learning_requirement": 35,
+      "speed_to_validation": 75,
+      "prospecting_required": 45,
+      "remote_compatibility": 100,
+      "physical_intensity": 5,
+      "work_style_targets": {
+        "REMOTE": 80,
+        "STABILITY": 25,
+        "INDEPENDENCE": 95,
+        "VISIBILITY": 50,
+        "SALES_COMFORT": 60
+      },
+      "goal_compatibility": {
+        "EXPERIENCE_MONETIZATION": 100,
+        "SELF_EMPLOYMENT": 90,
+        "EXTRA_INCOME": 80,
+        "PURPOSE": 85,
+        "LONG_TERM_WEALTH": 65
+      },
+      "market_viability": 78,
+      "market_basis": "Initial U.S. MVP calibration; update with fresh labor-market and customer outcome data.",
+      "first_move": "Spend 30 minutes defining one concrete first experiment for professional tutoring / training and the evidence that would tell you whether to continue.",
+      "week_plan": [
+        "Understand the path and identify the minimum skill or asset needed.",
+        "Build one small proof of work or practical sample.",
+        "Put the sample, offer, or application in front of real people.",
+        "Review the response and decide whether to continue, adjust, or test another path."
+      ]
+    },
+    {
+      "id": "K03",
+      "name": "Digital Product Creator",
+      "family": "knowledge",
+      "description": "Package useful knowledge into templates, guides, calculators, or digital resources.",
+      "capability_requirements": {
+        "CREATIVE": 65,
+        "ORGANIZATION": 55,
+        "SALES": 60,
+        "TEACHING": 45
+      },
+      "capability_weights": {
+        "CREATIVE": 0.25,
+        "ORGANIZATION": 0.25,
+        "SALES": 0.25,
+        "TEACHING": 0.25
+      },
+      "experience_tags": [
+        "EXP_EDUCATION",
+        "EXP_MARKETING",
+        "EXP_CREATIVE",
+        "EXP_FINANCE",
+        "EXP_TECHNOLOGY",
+        "EXP_ENTREPRENEURSHIP"
+      ],
+      "experience_required_years": 1,
+      "min_weekly_time": 5,
+      "capital_required": 0,
+      "risk_level": 70,
+      "learning_requirement": 50,
+      "speed_to_validation": 55,
+      "prospecting_required": 65,
+      "remote_compatibility": 100,
+      "physical_intensity": 5,
+      "work_style_targets": {
+        "REMOTE": 80,
+        "STABILITY": 25,
+        "INDEPENDENCE": 95,
+        "VISIBILITY": 50,
+        "SALES_COMFORT": 60
+      },
+      "goal_compatibility": {
+        "EXPERIENCE_MONETIZATION": 100,
+        "SELF_EMPLOYMENT": 90,
+        "EXTRA_INCOME": 80,
+        "PURPOSE": 85,
+        "LONG_TERM_WEALTH": 65
+      },
+      "market_viability": 70,
+      "market_basis": "Initial U.S. MVP calibration; update with fresh labor-market and customer outcome data.",
+      "first_move": "Spend 30 minutes defining one concrete first experiment for digital product creator and the evidence that would tell you whether to continue.",
+      "week_plan": [
+        "Understand the path and identify the minimum skill or asset needed.",
+        "Build one small proof of work or practical sample.",
+        "Put the sample, offer, or application in front of real people.",
+        "Review the response and decide whether to continue, adjust, or test another path."
+      ]
+    },
+    {
+      "id": "K04",
+      "name": "Workshop / Training Business",
+      "family": "knowledge",
+      "description": "Package expertise into paid workshops or structured training.",
+      "capability_requirements": {
+        "TEACHING": 85,
+        "SALES": 60,
+        "ORGANIZATION": 65,
+        "LEADERSHIP": 55
+      },
+      "capability_weights": {
+        "TEACHING": 0.25,
+        "SALES": 0.25,
+        "ORGANIZATION": 0.25,
+        "LEADERSHIP": 0.25
+      },
+      "experience_tags": [
+        "EXP_EDUCATION",
+        "EXP_MANAGEMENT",
+        "EXP_HEALTHCARE",
+        "EXP_TECHNOLOGY",
+        "EXP_MANUFACTURING",
+        "EXP_SALES"
+      ],
+      "experience_required_years": 5,
+      "min_weekly_time": 6,
+      "capital_required": 1,
+      "risk_level": 60,
+      "learning_requirement": 40,
+      "speed_to_validation": 75,
+      "prospecting_required": 70,
+      "remote_compatibility": 90,
+      "physical_intensity": 5,
+      "work_style_targets": {
+        "REMOTE": 80,
+        "STABILITY": 25,
+        "INDEPENDENCE": 95,
+        "VISIBILITY": 50,
+        "SALES_COMFORT": 60
+      },
+      "goal_compatibility": {
+        "EXPERIENCE_MONETIZATION": 100,
+        "SELF_EMPLOYMENT": 90,
+        "EXTRA_INCOME": 80,
+        "PURPOSE": 85,
+        "LONG_TERM_WEALTH": 65
+      },
+      "market_viability": 79,
+      "market_basis": "Initial U.S. MVP calibration; update with fresh labor-market and customer outcome data.",
+      "first_move": "Spend 30 minutes defining one concrete first experiment for workshop / training business and the evidence that would tell you whether to continue.",
+      "week_plan": [
+        "Understand the path and identify the minimum skill or asset needed.",
+        "Build one small proof of work or practical sample.",
+        "Put the sample, offer, or application in front of real people.",
+        "Review the response and decide whether to continue, adjust, or test another path."
+      ]
+    }
+  ]
+}
