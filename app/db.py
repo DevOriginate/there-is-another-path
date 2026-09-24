@@ -90,6 +90,45 @@ def mark_paid_by_session(session_id: str, email: str | None = None):
     with ENGINE.begin() as conn:
         conn.execute(text("UPDATE purchases SET status='paid', paid_at=:paid, email=COALESCE(:email,email) WHERE stripe_session_id=:sid"), {"paid":now_iso(),"email":email,"sid":session_id})
 
+def recover_paid_purchase(session_id: str, access_token: str, amount_cents: int, currency: str = "usd", email: str | None = None) -> dict | None:
+    paid = now_iso()
+    created = paid
+    params = {
+        "sid": session_id,
+        "token": access_token,
+        "email": email,
+        "amount": amount_cents,
+        "currency": currency or "usd",
+        "created": created,
+        "paid": paid,
+    }
+    with ENGINE.begin() as conn:
+        by_session = conn.execute(text("SELECT id FROM purchases WHERE stripe_session_id=:sid"), {"sid": session_id}).fetchone()
+        if by_session:
+            conn.execute(
+                text("UPDATE purchases SET status='paid', paid_at=:paid, email=COALESCE(:email,email), amount_cents=:amount, currency=:currency WHERE stripe_session_id=:sid"),
+                params,
+            )
+        else:
+            by_token = conn.execute(text("SELECT id FROM purchases WHERE access_token=:token"), {"token": access_token}).fetchone()
+            if by_token:
+                conn.execute(
+                    text("UPDATE purchases SET stripe_session_id=:sid, status='paid', paid_at=:paid, email=COALESCE(:email,email), amount_cents=:amount, currency=:currency WHERE access_token=:token"),
+                    params,
+                )
+            else:
+                if DB_URL.startswith("sqlite:"):
+                    conn.execute(
+                        text("INSERT INTO purchases(access_token,email,status,amount_cents,currency,stripe_session_id,acquisition_json,created_at,paid_at) VALUES(:token,:email,'paid',:amount,:currency,:sid,'{}',:created,:paid)"),
+                        params,
+                    )
+                else:
+                    conn.execute(
+                        text("INSERT INTO purchases(access_token,email,status,amount_cents,currency,stripe_session_id,acquisition_json,created_at,paid_at) VALUES(:token,:email,'paid',:amount,:currency,:sid,'{}',:created,:paid)"),
+                        params,
+                    )
+    return get_purchase_by_session(session_id) or get_purchase_by_token(access_token)
+
 def get_purchase_by_token(token: str) -> Optional[dict]:
     with ENGINE.connect() as conn:
         row = conn.execute(text("SELECT * FROM purchases WHERE access_token=:token"), {"token":token}).fetchone()

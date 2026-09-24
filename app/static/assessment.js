@@ -1,11 +1,20 @@
 const sel=s=>document.querySelector(s);
-const token=new URLSearchParams(location.search).get('token');
+const queryToken=new URLSearchParams(location.search).get('token');
+const savedToken=localStorage.getItem('pathfinder-access-token');
+const token=queryToken||savedToken;
+if(queryToken){
+ localStorage.setItem('pathfinder-access-token',queryToken);
+ history.replaceState(null,'','/start');
+}
 let qs=[],i=0,a={};
 const pretty=s=>String(s).replaceAll('_',' ').replace(/\b\w/g,c=>c.toUpperCase());
 async function init(){
  if(!token){location.href='/';return}
  const access=await fetch('/api/v1/access/'+encodeURIComponent(token));
- if(!access.ok){sel('#app').innerHTML='<div class="card"><h2>Access not found</h2><a class="btn" href="/">Return home</a></div>';return}
+ if(!access.ok){
+  if(localStorage.getItem('pathfinder-access-token')===token) localStorage.removeItem('pathfinder-access-token');
+  sel('#app').innerHTML='<div class="card"><h2>Access not found</h2><a class="btn" href="/">Return home</a></div>';return
+ }
  const aj=await access.json(); if(aj.completed){location.href=aj.report_url;return}
  qs=(await fetch('/api/v1/assessment/schema').then(r=>r.json())).questions; render();
 }
