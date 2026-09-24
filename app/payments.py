@@ -31,20 +31,38 @@ def create_checkout(acquisition: dict, email: str | None = None) -> dict:
     return {"mode":"stripe", "url": session.url}
 
 def verify_success(session_id: str) -> dict | None:
-    purchase = db.get_purchase_by_session(session_id)
-    if not purchase: return None
-    if purchase['status'] == 'paid': return purchase
-    if not STRIPE_SECRET_KEY: return None
+    if not STRIPE_SECRET_KEY:
+        return None
     import stripe
     stripe.api_key = STRIPE_SECRET_KEY
     session = stripe.checkout.Session.retrieve(session_id)
-    if session.payment_status == 'paid':
-        email = None
-        try: email = session.customer_details.email
-        except Exception: pass
-        db.mark_paid_by_session(session_id, email)
+    if session.payment_status != 'paid':
+        return None
+
+    email = None
+    try:
+        email = session.customer_details.email
+    except Exception:
+        pass
+
+    purchase = db.get_purchase_by_session(session_id)
+    if purchase:
+        if purchase['status'] != 'paid':
+            db.mark_paid_by_session(session_id, email)
         return db.get_purchase_by_session(session_id)
-    return None
+
+    metadata = session.metadata or {}
+    access_token = metadata.get("access_token")
+    if not access_token:
+        return None
+
+    return db.recover_paid_purchase(
+        session_id=session_id,
+        access_token=access_token,
+        amount_cents=session.amount_total or PRODUCT_PRICE_USD * 100,
+        currency=session.currency or "usd",
+        email=email,
+    )
 
 def handle_webhook(payload: bytes, signature: str):
     if not STRIPE_SECRET_KEY or not STRIPE_WEBHOOK_SECRET:
@@ -56,5 +74,16 @@ def handle_webhook(payload: bytes, signature: str):
         session = event['data']['object']
         if session.get('payment_status') == 'paid':
             email = (session.get('customer_details') or {}).get('email')
-            db.mark_paid_by_session(session['id'], email)
+            metadata = session.get('metadata') or {}
+            access_token = metadata.get('access_token')
+            if access_token:
+                db.recover_paid_purchase(
+                    session_id=session['id'],
+                    access_token=access_token,
+                    amount_cents=session.get('amount_total') or PRODUCT_PRICE_USD * 100,
+                    currency=session.get('currency') or 'usd',
+                    email=email,
+                )
+            else:
+                db.mark_paid_by_session(session['id'], email)
     return event['type']
