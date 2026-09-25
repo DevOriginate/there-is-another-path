@@ -24,3 +24,14 @@ SUPPORT_EMAIL = os.getenv("SUPPORT_EMAIL", "thereisanotherp4th@gmail.com")
 SELLER_LEGAL_NAME = os.getenv("SELLER_LEGAL_NAME", "").strip()
 BILLING_LABEL = os.getenv("BILLING_LABEL", "RIQUELME").strip()
 REFUND_DAYS = int(os.getenv("REFUND_DAYS", "7"))
+
+
+# Privacy & session security
+DATA_ENCRYPTION_KEY = os.getenv("DATA_ENCRYPTION_KEY", "").strip()
+SESSION_COOKIE_NAME = os.getenv("SESSION_COOKIE_NAME", "pf_session").strip() or "pf_session"
+SESSION_COOKIE_SECURE = os.getenv(
+    "SESSION_COOKIE_SECURE",
+    "true" if PUBLIC_BASE_URL.startswith("https://") else "false"
+).lower() in {"1", "true", "yes", "on"}
+ASSESSMENT_RETENTION_DAYS = int(os.getenv("ASSESSMENT_RETENTION_DAYS", "90"))
+EXPOSE_API_DOCS = os.getenv("EXPOSE_API_DOCS", "false").lower() in {"1", "true", "yes", "on"}

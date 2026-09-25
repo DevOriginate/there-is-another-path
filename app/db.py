@@ -1,13 +1,17 @@
 from __future__ import annotations
-import json, secrets
-from datetime import datetime, timezone
+import json, secrets, hashlib
+from datetime import datetime, timezone, timedelta
 from typing import Any, Optional
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from .config import DATABASE_URL
+from .security import encrypt_json, decrypt_json
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+def _token_digest(token: str) -> str:
+    return "sha256:" + hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 def _normalize_db_url(url: str) -> str:
     if url.startswith("postgres://"):
@@ -73,7 +77,7 @@ def _rowdict(row) -> dict | None:
 def create_purchase(amount_cents: int, acquisition: dict[str, Any], email: str | None = None, status: str = "pending") -> dict:
     token = secrets.token_urlsafe(24)
     created = now_iso()
-    params = {"token":token,"email":email,"status":status,"amount":amount_cents,"acq":json.dumps(acquisition),"created":created,"paid":created if status == 'paid' else None}
+    params = {"token":_token_digest(token),"email":email,"status":status,"amount":amount_cents,"acq":json.dumps(acquisition),"created":created,"paid":created if status == 'paid' else None}
     with ENGINE.begin() as conn:
         if DB_URL.startswith("sqlite:"):
             res = conn.execute(text("INSERT INTO purchases(access_token,email,status,amount_cents,acquisition_json,created_at,paid_at) VALUES(:token,:email,:status,:amount,:acq,:created,:paid)"), params)
@@ -87,16 +91,21 @@ def set_stripe_session(purchase_id: int, session_id: str):
         conn.execute(text("UPDATE purchases SET stripe_session_id=:sid WHERE id=:id"), {"sid":session_id,"id":purchase_id})
 
 def mark_paid_by_session(session_id: str, email: str | None = None):
+    # Privacy V1 deliberately does not persist checkout email in our database.
     with ENGINE.begin() as conn:
-        conn.execute(text("UPDATE purchases SET status='paid', paid_at=:paid, email=COALESCE(:email,email) WHERE stripe_session_id=:sid"), {"paid":now_iso(),"email":email,"sid":session_id})
+        conn.execute(
+            text("UPDATE purchases SET status='paid', paid_at=:paid, email=NULL WHERE stripe_session_id=:sid"),
+            {"paid": now_iso(), "sid": session_id},
+        )
 
-def recover_paid_purchase(session_id: str, access_token: str, amount_cents: int, currency: str = "usd", email: str | None = None) -> dict | None:
+def recover_paid_purchase(session_id: str, access_token: str | None, amount_cents: int, currency: str = "usd", email: str | None = None) -> dict | None:
     paid = now_iso()
     created = paid
+    access_token = access_token or secrets.token_urlsafe(24)
     params = {
         "sid": session_id,
-        "token": access_token,
-        "email": email,
+        "token": _token_digest(access_token),
+        "email": None,
         "amount": amount_cents,
         "currency": currency or "usd",
         "created": created,
@@ -106,14 +115,14 @@ def recover_paid_purchase(session_id: str, access_token: str, amount_cents: int,
         by_session = conn.execute(text("SELECT id FROM purchases WHERE stripe_session_id=:sid"), {"sid": session_id}).fetchone()
         if by_session:
             conn.execute(
-                text("UPDATE purchases SET status='paid', paid_at=:paid, email=COALESCE(:email,email), amount_cents=:amount, currency=:currency WHERE stripe_session_id=:sid"),
+                text("UPDATE purchases SET status='paid', paid_at=:paid, email=NULL, amount_cents=:amount, currency=:currency WHERE stripe_session_id=:sid"),
                 params,
             )
         else:
-            by_token = conn.execute(text("SELECT id FROM purchases WHERE access_token=:token"), {"token": access_token}).fetchone()
+            by_token = conn.execute(text("SELECT id FROM purchases WHERE access_token=:token"), {"token": _token_digest(access_token)}).fetchone()
             if by_token:
                 conn.execute(
-                    text("UPDATE purchases SET stripe_session_id=:sid, status='paid', paid_at=:paid, email=COALESCE(:email,email), amount_cents=:amount, currency=:currency WHERE access_token=:token"),
+                    text("UPDATE purchases SET stripe_session_id=:sid, status='paid', paid_at=:paid, email=NULL, amount_cents=:amount, currency=:currency WHERE access_token=:token"),
                     params,
                 )
             else:
@@ -130,8 +139,23 @@ def recover_paid_purchase(session_id: str, access_token: str, amount_cents: int,
     return get_purchase_by_session(session_id) or get_purchase_by_token(access_token)
 
 def get_purchase_by_token(token: str) -> Optional[dict]:
+    digest = _token_digest(token)
+    with ENGINE.begin() as conn:
+        row = conn.execute(
+            text("SELECT * FROM purchases WHERE access_token=:digest OR access_token=:legacy"),
+            {"digest": digest, "legacy": token},
+        ).fetchone()
+        if row and row._mapping["access_token"] == token:
+            conn.execute(
+                text("UPDATE purchases SET access_token=:digest WHERE id=:id"),
+                {"digest": digest, "id": row._mapping["id"]},
+            )
+            row = conn.execute(text("SELECT * FROM purchases WHERE id=:id"), {"id": row._mapping["id"]}).fetchone()
+    return _rowdict(row)
+
+def get_purchase_by_id(purchase_id: int) -> Optional[dict]:
     with ENGINE.connect() as conn:
-        row = conn.execute(text("SELECT * FROM purchases WHERE access_token=:token"), {"token":token}).fetchone()
+        row = conn.execute(text("SELECT * FROM purchases WHERE id=:id"), {"id": purchase_id}).fetchone()
     return _rowdict(row)
 
 def get_purchase_by_session(session_id: str) -> Optional[dict]:
@@ -140,7 +164,7 @@ def get_purchase_by_session(session_id: str) -> Optional[dict]:
     return _rowdict(row)
 
 def save_assessment(purchase_id: int, answers: dict, result: dict):
-    params={"pid":purchase_id,"answers":json.dumps(answers),"result":json.dumps(result),"created":now_iso()}
+    params={"pid":purchase_id,"answers":encrypt_json(answers),"result":encrypt_json(result),"created":now_iso()}
     with ENGINE.begin() as conn:
         if DB_URL.startswith("sqlite:"):
             conn.execute(text("INSERT INTO assessments(purchase_id,answers_json,result_json,created_at) VALUES(:pid,:answers,:result,:created) ON CONFLICT(purchase_id) DO UPDATE SET answers_json=excluded.answers_json,result_json=excluded.result_json,created_at=excluded.created_at"), params)
@@ -151,15 +175,89 @@ def get_assessment_for_purchase(purchase_id: int) -> Optional[dict]:
     with ENGINE.connect() as conn:
         row = conn.execute(text("SELECT * FROM assessments WHERE purchase_id=:pid"), {"pid":purchase_id}).fetchone()
     if not row: return None
-    d = _rowdict(row); d["answers"] = json.loads(d.pop("answers_json")); d["result"] = json.loads(d.pop("result_json")); return d
+    d = _rowdict(row); d["answers"] = decrypt_json(d.pop("answers_json")); d["result"] = decrypt_json(d.pop("result_json")); return d
 
 def save_feedback(purchase_id: int, day: int, payload: dict):
-    params={"pid":purchase_id,"day":day,"payload":json.dumps(payload),"created":now_iso()}
+    params={"pid":purchase_id,"day":day,"payload":encrypt_json(payload),"created":now_iso()}
     with ENGINE.begin() as conn:
         if DB_URL.startswith("sqlite:"):
             conn.execute(text("INSERT INTO feedback(purchase_id,day,payload_json,created_at) VALUES(:pid,:day,:payload,:created) ON CONFLICT(purchase_id,day) DO UPDATE SET payload_json=excluded.payload_json,created_at=excluded.created_at"), params)
         else:
             conn.execute(text("INSERT INTO feedback(purchase_id,day,payload_json,created_at) VALUES(:pid,:day,:payload,:created) ON CONFLICT(purchase_id,day) DO UPDATE SET payload_json=EXCLUDED.payload_json,created_at=EXCLUDED.created_at"), params)
+
+
+def privacy_maintenance(retention_days: int) -> dict:
+    """Encrypt legacy assessment rows, remove locally stored emails, and expire old personal data."""
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=retention_days)).isoformat()
+    encrypted = 0
+    with ENGINE.begin() as conn:
+        rows = conn.execute(text("SELECT id, answers_json, result_json FROM assessments")).fetchall()
+        for row in rows:
+            m = row._mapping
+            answers_raw = m["answers_json"]
+            result_raw = m["result_json"]
+            if not str(answers_raw).startswith("fernet:") or not str(result_raw).startswith("fernet:"):
+                conn.execute(
+                    text("UPDATE assessments SET answers_json=:answers, result_json=:result WHERE id=:id"),
+                    {
+                        "answers": encrypt_json(decrypt_json(answers_raw)),
+                        "result": encrypt_json(decrypt_json(result_raw)),
+                        "id": m["id"],
+                    },
+                )
+                encrypted += 1
+
+        feedback_rows = conn.execute(text("SELECT id, payload_json FROM feedback")).fetchall()
+        for row in feedback_rows:
+            m = row._mapping
+            raw = m["payload_json"]
+            if not str(raw).startswith("fernet:"):
+                conn.execute(
+                    text("UPDATE feedback SET payload_json=:payload WHERE id=:id"),
+                    {"payload": encrypt_json(json.loads(raw)), "id": m["id"]},
+                )
+
+        token_rows = conn.execute(text("SELECT id, access_token FROM purchases")).fetchall()
+        legacy_tokens_hashed = 0
+        for row in token_rows:
+            m = row._mapping
+            token_value = str(m["access_token"])
+            if not token_value.startswith("sha256:"):
+                conn.execute(
+                    text("UPDATE purchases SET access_token=:digest WHERE id=:id"),
+                    {"digest": _token_digest(token_value), "id": m["id"]},
+                )
+                legacy_tokens_hashed += 1
+
+        scrubbed = conn.execute(text("UPDATE purchases SET email=NULL WHERE email IS NOT NULL")).rowcount or 0
+        feedback_deleted = conn.execute(text("DELETE FROM feedback WHERE created_at < :cutoff"), {"cutoff": cutoff}).rowcount or 0
+        assessments_deleted = conn.execute(text("DELETE FROM assessments WHERE created_at < :cutoff"), {"cutoff": cutoff}).rowcount or 0
+
+    return {
+        "legacy_assessments_encrypted": encrypted,
+        "legacy_access_tokens_hashed": legacy_tokens_hashed,
+        "purchase_emails_scrubbed": scrubbed,
+        "expired_feedback_deleted": feedback_deleted,
+        "expired_assessments_deleted": assessments_deleted,
+    }
+
+def delete_personal_data(purchase_id: int) -> dict:
+    """Delete consultation data while retaining the minimum purchase record."""
+    with ENGINE.begin() as conn:
+        feedback_deleted = conn.execute(
+            text("DELETE FROM feedback WHERE purchase_id=:pid"), {"pid": purchase_id}
+        ).rowcount or 0
+        assessments_deleted = conn.execute(
+            text("DELETE FROM assessments WHERE purchase_id=:pid"), {"pid": purchase_id}
+        ).rowcount or 0
+        conn.execute(
+            text("UPDATE purchases SET email=NULL, acquisition_json='{}' WHERE id=:pid"),
+            {"pid": purchase_id},
+        )
+    return {
+        "feedback_deleted": feedback_deleted,
+        "assessments_deleted": assessments_deleted,
+    }
 
 def admin_summary() -> dict:
     with ENGINE.connect() as conn:

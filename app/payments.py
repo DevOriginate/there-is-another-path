@@ -2,20 +2,32 @@ from __future__ import annotations
 from . import db
 from .config import *
 
+_ALLOWED_ACQUISITION_KEYS = {"utm_source","utm_medium","utm_campaign","utm_content","utm_term","landing_variant"}
+
+def _safe_acquisition(acquisition: dict) -> dict:
+    clean = {}
+    for key in _ALLOWED_ACQUISITION_KEYS:
+        value = acquisition.get(key)
+        if value is None:
+            continue
+        clean[key] = str(value)[:120]
+    return clean
+
 def create_checkout(acquisition: dict, email: str | None = None) -> dict:
     amount = PRODUCT_PRICE_USD * 100
+    acquisition = _safe_acquisition(acquisition)
     if DEMO_MODE or not STRIPE_SECRET_KEY:
-        purchase = db.create_purchase(amount, acquisition, email, status="paid")
-        return {"mode":"demo", "url": f"{PUBLIC_BASE_URL}/start?token={purchase['access_token']}", "access_token": purchase['access_token']}
+        purchase = db.create_purchase(amount, acquisition, None, status="paid")
+        return {"mode":"demo", "url": f"{PUBLIC_BASE_URL}/checkout/demo-success?token={purchase['access_token']}"}
     import stripe
     stripe.api_key = STRIPE_SECRET_KEY
-    purchase = db.create_purchase(amount, acquisition, email, status="pending")
+    purchase = db.create_purchase(amount, acquisition, None, status="pending")
     kwargs = dict(
         mode="payment",
         success_url=f"{PUBLIC_BASE_URL}/checkout/success?session_id={{CHECKOUT_SESSION_ID}}",
         cancel_url=f"{PUBLIC_BASE_URL}/?checkout=cancelled",
         client_reference_id=str(purchase['id']),
-        metadata={"purchase_id": str(purchase['id']), "access_token": purchase['access_token']},
+        metadata={"purchase_id": str(purchase['id'])},
         allow_promotion_codes=True,
     )
     if STRIPE_PRICE_ID:
@@ -39,29 +51,18 @@ def verify_success(session_id: str) -> dict | None:
     if session.payment_status != 'paid':
         return None
 
-    email = None
-    try:
-        email = session.customer_details.email
-    except Exception:
-        pass
-
     purchase = db.get_purchase_by_session(session_id)
     if purchase:
         if purchase['status'] != 'paid':
-            db.mark_paid_by_session(session_id, email)
+            db.mark_paid_by_session(session_id)
         return db.get_purchase_by_session(session_id)
-
-    metadata = session.metadata or {}
-    access_token = metadata.get("access_token")
-    if not access_token:
-        return None
 
     return db.recover_paid_purchase(
         session_id=session_id,
-        access_token=access_token,
+        access_token=None,
         amount_cents=session.amount_total or PRODUCT_PRICE_USD * 100,
         currency=session.currency or "usd",
-        email=email,
+        email=None,
     )
 
 def handle_webhook(payload: bytes, signature: str):
@@ -73,17 +74,15 @@ def handle_webhook(payload: bytes, signature: str):
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
         if session.get('payment_status') == 'paid':
-            email = (session.get('customer_details') or {}).get('email')
-            metadata = session.get('metadata') or {}
-            access_token = metadata.get('access_token')
-            if access_token:
+            purchase = db.get_purchase_by_session(session['id'])
+            if purchase:
+                db.mark_paid_by_session(session['id'])
+            else:
                 db.recover_paid_purchase(
                     session_id=session['id'],
-                    access_token=access_token,
+                    access_token=None,
                     amount_cents=session.get('amount_total') or PRODUCT_PRICE_USD * 100,
                     currency=session.get('currency') or 'usd',
-                    email=email,
+                    email=None,
                 )
-            else:
-                db.mark_paid_by_session(session['id'], email)
     return event['type']
