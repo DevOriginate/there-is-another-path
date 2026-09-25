@@ -241,6 +241,24 @@ def privacy_maintenance(retention_days: int) -> dict:
         "expired_assessments_deleted": assessments_deleted,
     }
 
+def delete_personal_data(purchase_id: int) -> dict:
+    """Delete consultation data while retaining the minimum purchase record."""
+    with ENGINE.begin() as conn:
+        feedback_deleted = conn.execute(
+            text("DELETE FROM feedback WHERE purchase_id=:pid"), {"pid": purchase_id}
+        ).rowcount or 0
+        assessments_deleted = conn.execute(
+            text("DELETE FROM assessments WHERE purchase_id=:pid"), {"pid": purchase_id}
+        ).rowcount or 0
+        conn.execute(
+            text("UPDATE purchases SET email=NULL, acquisition_json='{}' WHERE id=:pid"),
+            {"pid": purchase_id},
+        )
+    return {
+        "feedback_deleted": feedback_deleted,
+        "assessments_deleted": assessments_deleted,
+    }
+
 def admin_summary() -> dict:
     with ENGINE.connect() as conn:
         p = conn.execute(text("SELECT COUNT(*) AS total, SUM(CASE WHEN status='paid' THEN 1 ELSE 0 END) AS paid, SUM(CASE WHEN status='paid' THEN amount_cents ELSE 0 END) AS revenue_cents FROM purchases")).fetchone()
