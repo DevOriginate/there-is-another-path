@@ -31,7 +31,7 @@ async function init(){
 <section class="report-hero">
   <div class="print-actions actions"><button class="btn secondary" id="print-report">Print / Save PDF</button></div>
   <div class="eyebrow">Your Path Consultation</div>
-  <span class="score-pill">${esc(d.confidence.band)} · ${esc(d.confidence.score)}/100 confidence</span>
+  <span class="score-pill">Report confidence · ${esc(d.confidence.band)} · ${esc(d.confidence.score)}/100</span>
   <h1>${esc(d.headline)}</h1>
   <p class="lead">This consultation was composed from your assessment as a single case — your goals, constraints, time, risk tolerance, experience, preferences and ranked path together.</p>
 </section>
@@ -80,19 +80,20 @@ ${(d.client_words||d.help_words)?`
   </div>
 </section>
 
-<section class="section">
+<section class="section situation-section">
   <div class="eyebrow">Your situation</div>
   <h2>What this recommendation is actually accounting for.</h2>
   <div class="snapshot-card card">${snapshotRows(d.client_snapshot)}</div>
 </section>
 
-<section class="section">
+<section class="section ranked-section">
   <div class="eyebrow">Ranked paths</div>
   <div class="grid grid3">
     ${d.top_paths.map((x,i)=>`<div class="card path-card ${i===0?'primary':''}">
       <div class="eyebrow">${i===0?'Primary path':i===1?'Second path':'Alternative path'}</div>
       <h3>${esc(x.name)}</h3>
       <div class="path-score">${esc(x.score)}</div>
+      <div class="score-caption">Path fit score</div>
       <div class="muted">${esc(x.band)} · ${esc(x.family_label)}</div>
       <p>${esc((x.strengths||[])[0]||'Strong overall alignment.')}</p>
       ${(x.constraints||[]).length?`<p class="muted"><strong>Watch:</strong> ${esc(x.constraints[0])}</p>`:''}
@@ -102,10 +103,11 @@ ${(d.client_words||d.help_words)?`
 
 <section class="section">
   <div class="grid grid2">
-    <div class="card">
+    <div class="card primary-reason-card">
       <div class="eyebrow">Why this path won</div>
       <h2>${esc(p.name)}</h2>
       <p>${esc(d.why_primary)}</p>
+      ${d.constraint_read?`<div class="case-against"><div class="eyebrow">The case against it</div><p>${esc(d.constraint_read)}</p></div>`:''}
     </div>
     <div class="card diagnostics-card">
       <div class="eyebrow">Fit diagnostics</div>
@@ -118,7 +120,7 @@ ${(d.client_words||d.help_words)?`
 </section>
 
 ${(d.alternative_analysis||[]).length?`
-<section class="section">
+<section class="section alternatives-section">
   <div class="eyebrow">Why not the other paths?</div>
   <h2>Good options can still be the wrong first move.</h2>
   <div class="grid grid2">
@@ -133,7 +135,7 @@ ${(d.alternative_analysis||[]).length?`
   </div>
 </section>`:''}
 
-<section class="section">
+<section class="section plan-section">
   <div class="eyebrow">Your first 30 days</div>
   <h2>A plan built around this case, not a generic checklist.</h2>
   <p class="lead">You are not trying to become an expert in 30 days. You are trying to create enough real evidence to know whether this path deserves more of your life.</p>
@@ -144,7 +146,7 @@ ${(d.alternative_analysis||[]).length?`
 </section>
 
 ${d.decision_rules&&Object.keys(d.decision_rules).length?`
-<section class="section">
+<section class="section rules-section">
   <div class="eyebrow">Decision rules</div>
   <h2>Know what evidence changes the recommendation.</h2>
   <p class="lead">A useful consultation should tell you what would make it stronger, what would require adjustment, and what would justify changing direction.</p>
