@@ -107,3 +107,22 @@ init().catch(err=>{
   sel('#reload-assessment')?.addEventListener('click',()=>location.reload());
  }
 });
+
+
+async function showAssessmentBackup(){
+ const button=sel('#assessment-backup');
+ if(!button)return;
+ const r=await fetch('/api/v1/access/backup',{credentials:'same-origin'});
+ const j=await r.json().catch(()=>({}));
+ if(!r.ok){
+  alert(j.detail||'Could not create the access backup.');
+  return;
+ }
+ const message='Reference: '+j.reference+'\nBackup key: '+j.key+'\n\nStore both privately. Anyone with them can restore this consultation while access remains active.';
+ if(navigator.clipboard){
+  try{await navigator.clipboard.writeText('Reference: '+j.reference+'\nBackup key: '+j.key)}catch(_){}
+ }
+ alert(message);
+}
+
+sel('#assessment-backup')?.addEventListener('click',showAssessmentBackup);
