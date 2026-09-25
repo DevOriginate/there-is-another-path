@@ -346,6 +346,17 @@ def get_purchase_by_payment_intent(payment_intent_id: str) -> Optional[dict]:
     return _rowdict(row)
 
 
+def mark_checkout_expired(session_id: str) -> bool:
+    with ENGINE.begin() as conn:
+        res = conn.execute(
+            text(
+                "UPDATE purchases SET status='expired' WHERE stripe_session_id=:sid AND status='pending'"
+            ),
+            {"sid": session_id},
+        )
+    return bool(res.rowcount)
+
+
 def set_purchase_billing_state(
     payment_intent_id: str,
     status: str,
