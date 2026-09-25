@@ -24,10 +24,11 @@ async function init(){
 ${d.long_term_opportunity?`<section class="section"><div class="card"><div class="eyebrow">Long-term opportunity</div><h2>${esc(d.long_term_opportunity.name)}</h2><p class="muted">Your underlying fit is strong, but this path is less compatible with your immediate timeline or current constraints. Keep it on your horizon rather than forcing it now.</p></div></section>`:''}
 ${(d.conflicts||[]).length?`<section class="section"><div class="card"><div class="eyebrow">Important tension</div>${d.conflicts.map(c=>`<p>${esc(c)}</p>`).join('')}</div></section>`:''}
 <section class="section"><div class="card feedback"><div class="eyebrow">Make the engine better</div><h2>Come back as you test the path.</h2><p class="muted">Your Day 7, Day 14 and Day 30 feedback helps us measure whether a recommendation created real movement, not just a good-looking report.</p><div><button class="btn secondary feedback-btn" data-day="7">Day 7 check-in</button><button class="btn secondary feedback-btn" data-day="14">Day 14 check-in</button><button class="btn secondary feedback-btn" data-day="30">Day 30 check-in</button></div><p class="privacy-hint">Do not include names, contact details, medical information, account numbers, or other sensitive personal data in feedback.</p><p id="feedbackStatus" class="muted"></p></div></section>
-<section class="section"><p class="muted">${esc(d.disclaimer)}</p></section>`;
+<section class="section"><p class="muted">${esc(d.disclaimer)}</p><div class="privacy-controls"><button class="btn secondary" id="delete-private-data">Delete my private consultation data</button><p class="privacy-hint">This removes your stored assessment and progress feedback from this service. Minimal transaction records may remain for payment, accounting, fraud prevention, or legal obligations.</p></div></section>`;
 
  sel('#print-report')?.addEventListener('click',()=>window.print());
  document.querySelectorAll('.feedback-btn').forEach(btn=>btn.addEventListener('click',()=>feedback(Number(btn.dataset.day))));
+ sel('#delete-private-data')?.addEventListener('click',deletePrivateData);
 }
 
 async function feedback(day){
@@ -60,3 +61,15 @@ init().catch(err=>{
   sel('#reload-report')?.addEventListener('click',()=>location.reload());
  }
 });
+
+
+async function deletePrivateData(){
+ const ok=confirm('Delete your stored assessment and progress feedback? This cannot be undone.');
+ if(!ok)return;
+ const r=await fetch('/api/v1/privacy/delete',{method:'POST',credentials:'same-origin'});
+ if(r.ok){
+  location.href='/';
+  return;
+ }
+ alert('Could not delete the private consultation data. Please try again or contact support.');
+}
