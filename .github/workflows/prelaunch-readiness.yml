@@ -31,6 +31,7 @@ jobs:
           node --check app/static/assessment.js
           node --check app/static/report.js
           node --check app/static/recover.js
+          node --check app/static/admin.js
       - name: Exercise paid consultation lifecycle
         shell: bash
         run: |
@@ -121,6 +122,13 @@ jobs:
               backup_data = backup.json()
               assert backup_data["reference"].startswith("PF-")
               assert len(backup_data["key"]) >= 20
+
+              support_backup = client.get(
+                  f"/api/v1/admin/access-backup/{p1['id']}",
+                  headers={"X-Admin-Token": "ci-admin-token"},
+              )
+              assert support_backup.status_code == 200, support_backup.text
+              assert support_backup.json()["reference"] == backup_data["reference"]
 
           with TestClient(app) as restored:
               restore = restored.post(
