@@ -24,6 +24,7 @@ from .security import validate_data_encryption_key
 from .access import active_purchase, purchase_access, set_access_cookie, remove_access_cookie_entry
 from .access_routes import router as access_router
 from .draft_routes import router as draft_router
+from .recovery_routes import router as recovery_router
 from .config import (
     PRODUCT_PRICE_USD,
     DEMO_MODE,
@@ -99,12 +100,14 @@ app = FastAPI(
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 app.include_router(access_router)
 app.include_router(draft_router)
+app.include_router(recovery_router)
 
 _rate_hits = defaultdict(deque)
 _RATE_RULES = {
     "/api/v1/checkout/session": (10, 60),
     "/api/v1/assessments/score": (30, 60),
     "/api/v1/assessments/draft": (60, 60),
+    "/api/v1/access/restore": (5, 60),
 }
 
 
@@ -220,6 +223,11 @@ def legacy_report_page(request: Request, token: str):
     response = RedirectResponse("/report", status_code=303)
     _set_access_cookie(response, request, purchase["id"])
     return response
+
+
+@app.get("/recover", include_in_schema=False)
+def recover_page():
+    return page("recover.html")
 
 
 @app.get("/privacy", include_in_schema=False)
