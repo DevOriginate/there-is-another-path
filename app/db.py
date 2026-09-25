@@ -241,6 +241,29 @@ def privacy_maintenance(retention_days: int) -> dict:
         "expired_assessments_deleted": assessments_deleted,
     }
 
+def get_recent_consultation_texts(limit: int = 200) -> list[str]:
+    """Return decrypted consultation bodies for similarity checking only."""
+    from .consultation import consultation_text
+
+    texts: list[str] = []
+    with ENGINE.connect() as conn:
+        rows = conn.execute(
+            text("SELECT result_json FROM assessments ORDER BY created_at DESC LIMIT :limit"),
+            {"limit": max(1, min(int(limit), 500))},
+        ).fetchall()
+
+    for row in rows:
+        try:
+            result = decrypt_json(row._mapping["result_json"])
+            consultation = result.get("_consultation") if isinstance(result, dict) else None
+            if consultation:
+                body = consultation_text(consultation)
+                if body:
+                    texts.append(body)
+        except Exception:
+            continue
+    return texts
+
 def delete_personal_data(purchase_id: int) -> dict:
     """Delete consultation data while retaining the minimum purchase record."""
     with ENGINE.begin() as conn:
