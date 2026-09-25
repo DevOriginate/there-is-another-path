@@ -180,6 +180,7 @@ async def security_headers(request: Request, call_next):
         or request.url.path.startswith("/api/v1/reports")
         or request.url.path.startswith("/api/v1/privacy")
         or request.url.path.startswith("/api/v1/assessments/draft")
+        or request.url.path.startswith("/api/v1/admin")
     )
     if private_path:
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
@@ -347,7 +348,7 @@ def checkout_demo_success(request: Request, token: str):
     if not DEMO_MODE:
         raise HTTPException(404, "Not found")
     purchase = db.get_purchase_by_token(token)
-    if not purchase or purchase["status"] != "paid":
+    if not purchase or not purchase_access(purchase)["valid"]:
         raise HTTPException(403, "Valid paid access is required")
     response = RedirectResponse(url="/start", status_code=303)
     _set_access_cookie(response, request, purchase["id"])
