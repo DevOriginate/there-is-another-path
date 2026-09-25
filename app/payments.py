@@ -150,9 +150,17 @@ def handle_webhook(payload: bytes, signature: str):
                     payment_intent_id=payment_intent_id,
                 )
 
+    elif event_type == "checkout.session.expired":
+        db.mark_checkout_expired(obj["id"])
+
     elif event_type == "charge.refunded":
         payment_intent_id = obj.get("payment_intent")
-        if payment_intent_id:
+        fully_refunded = bool(obj.get("refunded")) or (
+            obj.get("amount") is not None
+            and obj.get("amount_refunded") is not None
+            and int(obj.get("amount_refunded") or 0) >= int(obj.get("amount") or 0)
+        )
+        if payment_intent_id and fully_refunded:
             db.set_purchase_billing_state(
                 str(payment_intent_id),
                 status="refunded",
