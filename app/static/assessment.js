@@ -80,7 +80,8 @@ function capture(validate=true){
 
 async function next(){
  if(!capture(true))return;
- if(i<qs.length-1){i++;render();return}
+ if(i<qs.length-1){const nextIndex=i+1;await saveDraft(nextIndex);i=nextIndex;render();return}
+ await saveDraft(i);
  sel('#question').innerHTML='<div class="loading"><h2>Building your path report…</h2></div>';
  const r=await fetch('/api/v1/assessments/submit',{
   method:'POST',
