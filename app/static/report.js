@@ -216,6 +216,15 @@ ${(d.conflicts||[]).length?`
 </section>
 
 <section class="section">
+  <div class="card">
+    <div class="eyebrow">When your situation changes</div>
+    <h2>Run a fresh consultation.</h2>
+    <p class="muted">A new consultation is a separate one-time purchase. It starts a new assessment and does not overwrite this report while this report is still within its access window.</p>
+    <a class="btn secondary" href="/?new=1#offer">Start another consultation</a>
+  </div>
+</section>
+
+<section class="section">
   <p class="muted">${esc(d.disclaimer)}</p>
   <div class="privacy-controls">
     <button class="btn secondary" id="delete-private-data">Delete my private consultation data</button>
