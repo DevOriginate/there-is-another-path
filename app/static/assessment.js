@@ -1,6 +1,7 @@
 const sel=s=>document.querySelector(s);
 let qs=[],i=0,a={};
 const pretty=s=>String(s).replaceAll('_',' ').replace(/\b\w/g,c=>c.toUpperCase());
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 
 async function init(){
  const access=await fetch('/api/v1/access/me',{credentials:'same-origin'});
@@ -21,7 +22,7 @@ function render(){
  let html='';
  if(q.type==='single') html=q.options.map(o=>`<label class="option"><input type="radio" name="v" value="${o}" ${a[q.id]===o?'checked':''}> ${pretty(o)}</label>`).join('');
  else if(q.type==='multi') html=q.options.map(o=>`<label class="option"><input type="checkbox" value="${o}" ${(a[q.id]||[]).includes(o)?'checked':''}> ${pretty(o)}</label>`).join('');
- else if(q.type==='text') html=`<textarea id="txt" class="textarea">${a[q.id]||''}</textarea><p class="privacy-hint">Keep this about your situation, not your identity. Do not include names, email addresses, phone numbers, SSNs, payment details, account numbers, medical information, or other sensitive personal data.</p>`;
+ else if(q.type==='text') html=`<textarea id="txt" class="textarea">${esc(a[q.id]||'')}</textarea><p class="privacy-hint">Keep this about your situation, not your identity. Do not include names, email addresses, phone numbers, SSNs, payment details, account numbers, medical information, or other sensitive personal data.</p>`;
  else if(q.type==='scale_1_5') html=[1,2,3,4,5].map(n=>`<label class="option"><input type="radio" name="v" value="${n}" ${a[q.id]===n?'checked':''}> ${n}</label>`).join('');
  else if(q.type==='forced_pairs'){
   const pairs=[['customers','computer'],['build','sell'],['technical','people'],['create','improve']];
