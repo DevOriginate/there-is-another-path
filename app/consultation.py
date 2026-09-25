@@ -409,6 +409,61 @@ def _week_plan(answers: dict[str, Any], primary: dict[str, Any], meta: dict[str,
     return [{"week": i + 1, "title": title, "action": action} for i, (title, action) in enumerate(stages)]
 
 
+def _decision_rules(answers: dict[str, Any], primary: dict[str, Any], seed: int) -> dict[str, str]:
+    family = primary.get("family")
+    name = primary.get("name", "this path")
+    numbers = _case_numbers(answers, seed)
+    fear = FEAR_LABELS.get(answers.get("primary_fear"), "choosing wrong")
+
+    if family == "employment":
+        return {
+            "continue": (
+                f"Continue if your proof-of-work is improving and targeted contact with the market produces useful signal: replies, referrals, screening calls, interviews, or specific feedback about {name}."
+            ),
+            "adjust": (
+                f"Adjust the target if the same missing requirement appears repeatedly across employers or if {max(5, numbers['outreach']//2)} targeted applications produce interest in an adjacent role but not the exact role you chose."
+            ),
+            "switch": (
+                f"Re-rank the path if you can show relevant evidence, have corrected repeated gaps, and still receive no meaningful market signal after a disciplined test. Do not switch merely because the first rejection triggers your fear of {fear}."
+            ),
+        }
+    if family == "freelance":
+        return {
+            "continue": (
+                f"Continue if prospects understand the offer, conversations move toward scope or price, or even one buyer is willing to test a small paid version of {name}."
+            ),
+            "adjust": (
+                f"Adjust the buyer, problem, or deliverable if people respond but do not see enough value to pay. Use the objections from roughly {numbers['outreach']} market contacts before rewriting everything."
+            ),
+            "switch": (
+                f"Re-rank the path if a clear offer, credible sample, and repeated outreach create neither conversations nor paid interest. Protect yourself from {fear} by changing one variable at a time before abandoning the entire direction."
+            ),
+        }
+    if family == "service_business":
+        return {
+            "continue": (
+                f"Continue if real prospects acknowledge the problem, accept calls or pilots, and the smallest version of {name} can be delivered without violating your time, capital, or risk boundaries."
+            ),
+            "adjust": (
+                f"Adjust the customer/problem pairing when prospects agree the problem exists but resist the offer, timing, or price. Use the patterns from about {numbers['outreach']} contacts rather than one loud opinion."
+            ),
+            "switch": (
+                f"Re-rank the path if the problem repeatedly fails to earn attention or if delivering the pilot conflicts with the constraints the assessment identified. The fear of {fear} is not evidence; customer behavior is."
+            ),
+        }
+    return {
+        "continue": (
+            f"Continue if the intended audience repeatedly asks about the problem, uses the asset or session, and shows willingness to spend time or money for a deeper version of {name}."
+        ),
+        "adjust": (
+            f"Adjust the format when the problem is real but the delivery model is wrong. Test whether the same expertise works better as consulting, training, a service, or a smaller digital asset."
+        ),
+        "switch": (
+            f"Re-rank the path if the problem does not repeat across the audience or your experience does not create a meaningful shortcut for them. Do not let the fear of {fear} force you to defend an idea the audience is not validating."
+        ),
+    }
+
+
 def _alternative_analysis(primary: dict[str, Any], alternative: dict[str, Any], seed: int, index: int) -> dict[str, Any]:
     p_scores = dict(_score_rows(primary))
     a_scores = dict(_score_rows(alternative))
@@ -506,6 +561,7 @@ def _consultation_text(c: dict[str, Any]) -> str:
         c.get("first_move", ""),
         " ".join(w.get("action", "") for w in c.get("week_plan", [])),
         " ".join(a.get("upside", "") + " " + a.get("why_below", "") + " " + a.get("reconsider_if", "") for a in c.get("alternatives", [])),
+        " ".join(c.get("decision_rules", {}).values()),
         " ".join(c.get("anti_plan", [])),
     ]
     return " ".join(chunks)
@@ -519,6 +575,7 @@ def _paragraphs(c: dict[str, Any]) -> list[str]:
         c.get("first_move", ""),
         *[w.get("action", "") for w in c.get("week_plan", [])],
         *[a.get("upside", "") + " " + a.get("why_below", "") + " " + a.get("reconsider_if", "") for a in c.get("alternatives", [])],
+        *c.get("decision_rules", {}).values(),
         *c.get("anti_plan", []),
     ]
     return [x for x in parts if x]
@@ -617,6 +674,7 @@ def _compose(answers: dict[str, Any], result: dict[str, Any], purchase_id: int, 
         "first_move": first_move,
         "week_plan": week_plan,
         "alternatives": alternatives,
+        "decision_rules": _decision_rules(answers, primary, seed),
         "anti_plan": _anti_plan(answers, primary, seed),
         "fit_highlights": strengths,
         "fit_watchouts": watch,
@@ -696,6 +754,7 @@ def consultation_fragment_hashes(consultation: dict[str, Any]) -> list[str]:
     """Non-reversible hashes for the actionable instructions that must never be reused verbatim."""
     fragments = [consultation.get("first_move", "")]
     fragments.extend(item.get("action", "") for item in consultation.get("week_plan", []))
+    fragments.extend(consultation.get("decision_rules", {}).values())
     hashes = []
     for fragment in fragments:
         normalized = _normalized(fragment)
