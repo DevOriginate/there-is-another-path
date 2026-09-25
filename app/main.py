@@ -6,13 +6,14 @@ import time
 from collections import defaultdict, deque
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Request, Header
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
-from .models import AssessmentInput, AssessmentResult
+from .models import AssessmentInput, AssessmentResult, validate_free_text
 from .engine import evaluate, load_paths
 from . import db
 from .payments import create_checkout, verify_success, handle_webhook
@@ -371,8 +372,18 @@ def report_data(request: Request):
     return build_report(saved["answers"], saved["result"])
 
 
+class FeedbackDetails(BaseModel):
+    status: Literal["not_started", "started", "meaningful_progress", "changed_path"]
+    note: str = Field(max_length=1000)
+
+    @field_validator("note")
+    @classmethod
+    def protect_feedback_text(cls, value: str):
+        return validate_free_text(value)
+
+
 class FeedbackPayload(BaseModel):
-    payload: dict
+    payload: FeedbackDetails
 
 
 @app.post("/api/v1/feedback/{day}")
@@ -380,7 +391,7 @@ def feedback(request: Request, day: int, body: FeedbackPayload):
     if day not in {7, 14, 30}:
         raise HTTPException(400, "Feedback day must be 7, 14, or 30")
     purchase = _paid_purchase_from_request(request)
-    db.save_feedback(purchase["id"], day, body.payload)
+    db.save_feedback(purchase["id"], day, body.payload.model_dump())
     return {"ok": True}
 
 
