@@ -2153,3 +2153,29 @@ main > .section:nth-of-type(4) .card:hover{
     color:#ddd;
   }
 }
+
+
+.decision-rules{
+  margin-top:30px;
+}
+
+.rule-card{
+  min-height:260px;
+}
+
+.rule-card h3{
+  margin-top:16px;
+  font-size:1.55rem;
+}
+
+.continue-rule{
+  border-top:5px solid var(--field);
+}
+
+.adjust-rule{
+  border-top:5px solid var(--signal);
+}
+
+.switch-rule{
+  border-top:5px solid var(--route);
+}
