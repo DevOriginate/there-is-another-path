@@ -1,0 +1,111 @@
+name: Consultation V2 CI
+
+on:
+  push:
+    branches:
+      - "enhancement/consultation-v2-personalized"
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  consultation:
+    runs-on: ubuntu-latest
+    env:
+      DEMO_MODE: "true"
+      DATABASE_URL: "sqlite:////tmp/pathfinder-consultation-ci.db"
+      SESSION_COOKIE_SECURE: "false"
+      ADMIN_TOKEN: "ci-admin-token"
+      ASSESSMENT_RETENTION_DAYS: "90"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Compile Python
+        run: python -m compileall -q app
+      - name: Consultation uniqueness and integration test
+        shell: bash
+        run: |
+          export DATA_ENCRYPTION_KEY="$(python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')"
+          python - <<'PY'
+          from app.models import AssessmentInput
+          from app.engine import evaluate
+          from app.consultation import compose_unique_consultation, consultation_text, similarity
+          from app.reporting import build_report
+          from app import db
+
+          base = dict(
+              age_band="25-34",
+              current_situation="full_time_employee",
+              professional_direction="several_ideas",
+              primary_objectives=["new_career","learn_valuable_skill"],
+              financial_impact="replace_income",
+              available_capital="100_500",
+              income_urgency="3_months",
+              risk_tolerance="moderate",
+              weekly_time="10_20",
+              schedule="after_work",
+              learning_horizon="3_6_months",
+              experience_years="2_5",
+              experience_areas=["technology","customer_service"],
+              help_text="I want a direction I can test without quitting my job.",
+              natural_activities=["technology","problem_solving","analyzing_information","organizing"],
+              forced_choices={"p0":"computer","p1":"build","p2":"technical","p3":"improve"},
+              work_location="mostly_remote",
+              economic_model_preference="stable_paycheck",
+              sales_comfort=2,
+              tech_comfort=5,
+              visibility_comfort=2,
+              constraints=["full_time_job","limited_startup_money"],
+              prospecting="prefer_not",
+              five_year_outcome="better_paying_career",
+              primary_fear="choosing_wrong",
+              twelve_month_change="I want to be in a stronger career with evidence that I made the right move."
+          )
+
+          a1 = AssessmentInput(**base)
+          result = evaluate(a1).model_dump()
+          assert result["top_paths"], "Expected at least one ranked path"
+
+          b = dict(base)
+          b.update(
+              weekly_time="5_10",
+              schedule="weekends",
+              income_urgency="30_days",
+              risk_tolerance="low",
+              help_text="I need a test I can fit around family responsibilities.",
+              constraints=["full_time_job","dependents","limited_startup_money"],
+              primary_fear="wasting_time",
+              twelve_month_change="I want proof that a transition is realistic before I disrupt my family's stability."
+          )
+          a2 = AssessmentInput(**b)
+
+          c1 = compose_unique_consultation(a1.model_dump(), result, 101, [])
+          text1 = consultation_text(c1)
+          c2 = compose_unique_consultation(a2.model_dump(), result, 102, [text1])
+          text2 = consultation_text(c2)
+
+          assert c1["fingerprint"] != c2["fingerprint"]
+          assert c1["first_move"] != c2["first_move"]
+          assert c1["week_plan"] != c2["week_plan"]
+          assert similarity(text1, text2) < 0.95
+          assert c2["originality"]["checked_against"] == 1
+
+          db.init_db()
+          purchase = db.create_purchase(1900, {}, status="paid")
+          saved_result = dict(result)
+          saved_result["_consultation"] = c1
+          db.save_assessment(purchase["id"], a1.model_dump(), saved_result)
+          loaded = db.get_assessment_for_purchase(purchase["id"])
+          assert loaded["result"]["_consultation"]["fingerprint"] == c1["fingerprint"]
+
+          report = build_report(loaded["answers"], loaded["result"])
+          assert report["consultation_version"] == "2.0.0"
+          assert report["first_move"] == c1["first_move"]
+          assert len(report["week_plan"]) == 4
+          assert report["anti_plan"]
+
+          print("Consultation V2 uniqueness and integration test passed")
+          PY
