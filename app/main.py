@@ -20,7 +20,7 @@ from . import db
 from .payments import create_checkout, verify_success, handle_webhook
 from .reporting import build_report
 from .consultation import CONSULTATION_VERSION, compose_unique_consultation, consultation_fragment_hashes
-from .security import validate_data_encryption_key
+from .security import validate_data_encryption_key, recovery_code, recovery_reference
 from .access import active_purchase, purchase_access, set_access_cookie, remove_access_cookie_entry
 from .access_routes import router as access_router
 from .draft_routes import router as draft_router
@@ -437,6 +437,24 @@ def feedback(request: Request, day: int, body: FeedbackPayload):
     purchase = _paid_purchase_from_request(request)
     db.save_feedback(purchase["id"], day, body.payload.model_dump())
     return {"ok": True}
+
+
+@app.get("/api/v1/admin/access-backup/{purchase_id}")
+def admin_access_backup(purchase_id: int, x_admin_token: str | None = Header(default=None)):
+    supplied = x_admin_token or ""
+    expected = ADMIN_TOKEN or ""
+    if not expected or not secrets.compare_digest(supplied, expected):
+        raise HTTPException(403, "Invalid admin token")
+    purchase = db.get_purchase_by_id(purchase_id)
+    access = purchase_access(purchase)
+    if not purchase or not access["valid"]:
+        raise HTTPException(410, "Purchase is not inside an active access window")
+    return {
+        "purchase_id": purchase_id,
+        "reference": recovery_reference(purchase_id),
+        "key": recovery_code(purchase_id),
+        "expires_at": access.get("expires_at"),
+    }
 
 
 @app.get("/api/v1/admin/summary")
