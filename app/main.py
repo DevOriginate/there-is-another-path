@@ -18,7 +18,7 @@ from .engine import evaluate, load_paths
 from . import db
 from .payments import create_checkout, verify_success, handle_webhook
 from .reporting import build_report
-from .security import validate_data_encryption_key
+from .security import validate_data_encryption_key, create_private_session, read_private_session
 from .config import (
     PRODUCT_PRICE_USD,
     DEMO_MODE,
@@ -38,10 +38,10 @@ STATIC = APP_DIR / "static"
 SESSION_MAX_AGE = ASSESSMENT_RETENTION_DAYS * 24 * 60 * 60
 
 
-def _set_access_cookie(response, token: str) -> None:
+def _set_access_cookie(response, purchase_id: int) -> None:
     response.set_cookie(
         key=SESSION_COOKIE_NAME,
-        value=token,
+        value=create_private_session(purchase_id),
         max_age=SESSION_MAX_AGE,
         httponly=True,
         secure=SESSION_COOKIE_SECURE,
@@ -61,10 +61,14 @@ def _clear_access_cookie(response) -> None:
 
 
 def _paid_purchase_from_request(request: Request) -> dict:
-    token = request.cookies.get(SESSION_COOKIE_NAME)
-    if not token:
+    cookie_value = request.cookies.get(SESSION_COOKIE_NAME)
+    if not cookie_value:
         raise HTTPException(403, "Valid paid access is required")
-    purchase = db.get_purchase_by_token(token)
+    try:
+        purchase_id = read_private_session(cookie_value, SESSION_MAX_AGE)
+    except ValueError as exc:
+        raise HTTPException(403, "Valid paid access is required") from exc
+    purchase = db.get_purchase_by_id(purchase_id)
     if not purchase or purchase["status"] != "paid":
         raise HTTPException(403, "Valid paid access is required")
     return purchase
@@ -153,7 +157,6 @@ async def security_headers(request: Request, call_next):
         "img-src 'self' data: https://www.facebook.com; "
         "connect-src 'self' https://www.facebook.com https://connect.facebook.net; "
         "form-action 'self'; "
-        "upgrade-insecure-requests"
     )
     if request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https":
         response.headers["Strict-Transport-Security"] = "max-age=31536000"
@@ -189,7 +192,7 @@ def start(request: Request, token: str | None = None):
         if not purchase or purchase["status"] != "paid":
             return RedirectResponse("/", status_code=303)
         response = RedirectResponse("/start", status_code=303)
-        _set_access_cookie(response, token)
+        _set_access_cookie(response, purchase["id"])
         return response
     return page("assessment.html")
 
@@ -205,7 +208,7 @@ def legacy_report_page(token: str):
     if not purchase or purchase["status"] != "paid":
         return RedirectResponse("/", status_code=303)
     response = RedirectResponse("/report", status_code=303)
-    _set_access_cookie(response, token)
+    _set_access_cookie(response, purchase["id"])
     return response
 
 
@@ -314,7 +317,7 @@ def checkout_success(session_id: str):
             status_code=402,
         )
     response = RedirectResponse(url="/start", status_code=303)
-    _set_access_cookie(response, purchase["access_token"])
+    _set_access_cookie(response, purchase["id"])
     return response
 
 
@@ -326,7 +329,7 @@ def checkout_demo_success(token: str):
     if not purchase or purchase["status"] != "paid":
         raise HTTPException(403, "Valid paid access is required")
     response = RedirectResponse(url="/start", status_code=303)
-    _set_access_cookie(response, token)
+    _set_access_cookie(response, purchase["id"])
     return response
 
 
