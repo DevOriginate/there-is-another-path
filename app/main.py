@@ -273,6 +273,7 @@ def health():
         "consultation_version": CONSULTATION_VERSION,
         "market_version": data["market_version"],
         "path_count": len(data["paths"]),
+        "access_days": ASSESSMENT_RETENTION_DAYS,
         "demo_mode": DEMO_MODE,
     }
 
@@ -286,6 +287,7 @@ def public_config():
         "support_email": SUPPORT_EMAIL,
         "refund_days": REFUND_DAYS,
         "billing_label": BILLING_LABEL,
+        "access_days": ASSESSMENT_RETENTION_DAYS,
     }
 
 
