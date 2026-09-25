@@ -2374,3 +2374,16 @@ main > .section:nth-of-type(4) .card:hover{
 .access-backup-card .hidden{
   display:none;
 }
+
+
+.link-button{
+  appearance:none;
+  border:0;
+  padding:0;
+  background:transparent;
+  color:inherit;
+  font:inherit;
+  cursor:pointer;
+  text-decoration:underline;
+  text-underline-offset:3px;
+}
