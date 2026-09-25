@@ -20,7 +20,10 @@ from . import db
 from .payments import create_checkout, verify_success, handle_webhook
 from .reporting import build_report
 from .consultation import CONSULTATION_VERSION, compose_unique_consultation, consultation_fragment_hashes
-from .security import validate_data_encryption_key, create_private_session, read_private_session
+from .security import validate_data_encryption_key
+from .access import active_purchase, purchase_access, set_access_cookie, remove_access_cookie_entry
+from .access_routes import router as access_router
+from .draft_routes import router as draft_router
 from .config import (
     PRODUCT_PRICE_USD,
     DEMO_MODE,
