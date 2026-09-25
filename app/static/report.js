@@ -47,11 +47,17 @@ async function init(){
   </div>
 </section>
 
-${d.client_words?`
+${(d.client_words||d.help_words)?`
 <section class="section client-voice-section">
-  <div class="client-words">
-    <div class="eyebrow">What you said you want to change</div>
-    <blockquote>“${esc(d.client_words)}”</blockquote>
+  <div class="grid ${d.client_words&&d.help_words?'grid2':''}">
+    ${d.help_words?`<div class="client-words">
+      <div class="eyebrow">What you asked us to help with</div>
+      <blockquote>“${esc(d.help_words)}”</blockquote>
+    </div>`:''}
+    ${d.client_words?`<div class="client-words">
+      <div class="eyebrow">What you want to change in 12 months</div>
+      <blockquote>“${esc(d.client_words)}”</blockquote>
+    </div>`:''}
   </div>
 </section>`:''}
 
@@ -136,6 +142,30 @@ ${(d.alternative_analysis||[]).length?`
     <div><div class="week-title">${esc(w.title||('Week '+(i+1)))}</div><p>${esc(w.action||w)}</p></div>
   </div>`).join('')}
 </section>
+
+${d.decision_rules&&Object.keys(d.decision_rules).length?`
+<section class="section">
+  <div class="eyebrow">Decision rules</div>
+  <h2>Know what evidence changes the recommendation.</h2>
+  <p class="lead">A useful consultation should tell you what would make it stronger, what would require adjustment, and what would justify changing direction.</p>
+  <div class="grid grid3 decision-rules">
+    <div class="card rule-card continue-rule">
+      <div class="eyebrow">Continue</div>
+      <h3>Keep investing in the path if…</h3>
+      <p>${esc(d.decision_rules.continue)}</p>
+    </div>
+    <div class="card rule-card adjust-rule">
+      <div class="eyebrow">Adjust</div>
+      <h3>Change the experiment if…</h3>
+      <p>${esc(d.decision_rules.adjust)}</p>
+    </div>
+    <div class="card rule-card switch-rule">
+      <div class="eyebrow">Re-rank</div>
+      <h3>Consider another path if…</h3>
+      <p>${esc(d.decision_rules.switch)}</p>
+    </div>
+  </div>
+</section>`:''}
 
 ${(d.anti_plan||[]).length?`
 <section class="section">
