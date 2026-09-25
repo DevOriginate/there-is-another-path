@@ -222,12 +222,14 @@ jobs:
           assert loaded["result"]["_consultation"]["fingerprint"] == c1["fingerprint"]
 
           report = build_report(loaded["answers"], loaded["result"])
-          assert report["consultation_version"] == "2.1.0"
+          assert report["consultation_version"] == "2.2.0"
           assert report["first_move"] == c1["first_move"]
           assert len(report["week_plan"]) == 4
           assert report["anti_plan"]
           assert report["consultant_read"]
           assert report["core_tension"]
+          assert report["constraint_read"]
+          assert "first thing the 30-day experiment must test" in report["constraint_read"] or "main reason to challenge" in report["constraint_read"] or "overconfidence" in report["constraint_read"]
 
           # Full application route: paid private cookie -> submit -> saved consultation -> report.
           route_purchase = db.create_purchase(1900, {}, status="paid")
@@ -240,10 +242,11 @@ jobs:
               private_report = client.get("/api/v1/reports/me")
               assert private_report.status_code == 200, private_report.text
               payload = private_report.json()
-              assert payload["consultation_version"] == "2.1.0"
+              assert payload["consultation_version"] == "2.2.0"
               assert payload["first_move"]
               assert len(payload["week_plan"]) == 4
               assert payload["decision_brief"]["primary_path"]
+              assert payload["constraint_read"]
 
           # Safety/quality gates: no outcome promises and no advice to abruptly abandon income.
           combined = " ".join(generated + [text1, text2]).lower()
