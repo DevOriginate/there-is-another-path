@@ -6,7 +6,7 @@ def create_checkout(acquisition: dict, email: str | None = None) -> dict:
     amount = PRODUCT_PRICE_USD * 100
     if DEMO_MODE or not STRIPE_SECRET_KEY:
         purchase = db.create_purchase(amount, acquisition, None, status="paid")
-        return {"mode":"demo", "url": f"{PUBLIC_BASE_URL}/start?token={purchase['access_token']}", "access_token": purchase['access_token']}
+        return {"mode":"demo", "url": f"{PUBLIC_BASE_URL}/checkout/demo-success?token={purchase['access_token']}"}
     import stripe
     stripe.api_key = STRIPE_SECRET_KEY
     purchase = db.create_purchase(amount, acquisition, None, status="pending")
