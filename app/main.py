@@ -356,7 +356,7 @@ def checkout_demo_success(request: Request, token: str):
     if not purchase or purchase["status"] != "paid":
         raise HTTPException(403, "Valid paid access is required")
     response = RedirectResponse(url="/start", status_code=303)
-    _set_access_cookie(response, purchase["id"])
+    _set_access_cookie(response, request, purchase["id"])
     return response
 
 
