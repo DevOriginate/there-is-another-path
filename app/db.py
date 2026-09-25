@@ -67,6 +67,10 @@ def init_db():
           fingerprint TEXT PRIMARY KEY,
           created_at TEXT NOT NULL
         )""",
+        """CREATE TABLE IF NOT EXISTS consultation_fragment_fingerprints (
+          fingerprint TEXT PRIMARY KEY,
+          created_at TEXT NOT NULL
+        )""",
         "CREATE INDEX IF NOT EXISTS idx_purchase_status ON purchases(status)",
         "CREATE INDEX IF NOT EXISTS idx_purchase_created ON purchases(created_at)",
     ]
@@ -175,6 +179,7 @@ def save_assessment(
     answers: dict,
     result: dict,
     consultation_fingerprint: str | None = None,
+    consultation_fragment_fingerprints: list[str] | None = None,
 ):
     params={"pid":purchase_id,"answers":encrypt_json(answers),"result":encrypt_json(result),"created":now_iso()}
     with ENGINE.begin() as conn:
@@ -185,6 +190,14 @@ def save_assessment(
             ).rowcount
             if not inserted:
                 raise DuplicateConsultationFingerprint("Consultation content fingerprint already exists")
+
+        for fragment_fp in dict.fromkeys(consultation_fragment_fingerprints or []):
+            inserted = conn.execute(
+                text("INSERT INTO consultation_fragment_fingerprints(fingerprint,created_at) VALUES(:fp,:created) ON CONFLICT(fingerprint) DO NOTHING"),
+                {"fp": fragment_fp, "created": params["created"]},
+            ).rowcount
+            if not inserted:
+                raise DuplicateConsultationFingerprint("Consultation section fingerprint already exists")
 
         if DB_URL.startswith("sqlite:"):
             conn.execute(text("INSERT INTO assessments(purchase_id,answers_json,result_json,created_at) VALUES(:pid,:answers,:result,:created) ON CONFLICT(purchase_id) DO UPDATE SET answers_json=excluded.answers_json,result_json=excluded.result_json,created_at=excluded.created_at"), params)
