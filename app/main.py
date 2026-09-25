@@ -365,17 +365,6 @@ async def stripe_webhook(request: Request, stripe_signature: str | None = Header
     return {"received": True, "type": event_type}
 
 
-@app.get("/api/v1/access/me")
-def access_status(request: Request):
-    purchase = _paid_purchase_from_request(request)
-    assessment = db.get_assessment_for_purchase(purchase["id"])
-    return {
-        "valid": True,
-        "completed": bool(assessment),
-        "report_url": "/report" if assessment else None,
-    }
-
-
 @app.post("/api/v1/assessments/submit")
 def submit_assessment(request: Request, assessment: AssessmentInput):
     purchase = _paid_purchase_from_request(request)
