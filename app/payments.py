@@ -2,8 +2,20 @@ from __future__ import annotations
 from . import db
 from .config import *
 
+_ALLOWED_ACQUISITION_KEYS = {"utm_source","utm_medium","utm_campaign","utm_content","utm_term","landing_variant"}
+
+def _safe_acquisition(acquisition: dict) -> dict:
+    clean = {}
+    for key in _ALLOWED_ACQUISITION_KEYS:
+        value = acquisition.get(key)
+        if value is None:
+            continue
+        clean[key] = str(value)[:120]
+    return clean
+
 def create_checkout(acquisition: dict, email: str | None = None) -> dict:
     amount = PRODUCT_PRICE_USD * 100
+    acquisition = _safe_acquisition(acquisition)
     if DEMO_MODE or not STRIPE_SECRET_KEY:
         purchase = db.create_purchase(amount, acquisition, None, status="paid")
         return {"mode":"demo", "url": f"{PUBLIC_BASE_URL}/checkout/demo-success?token={purchase['access_token']}"}
