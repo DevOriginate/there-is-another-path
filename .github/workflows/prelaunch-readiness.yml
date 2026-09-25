@@ -1,0 +1,174 @@
+name: Prelaunch Readiness CI
+
+on:
+  push:
+    branches:
+      - "release/prelaunch-readiness-v1"
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lifecycle:
+    runs-on: ubuntu-latest
+    env:
+      DEMO_MODE: "true"
+      DATABASE_URL: "sqlite:////tmp/pathfinder-prelaunch-ci.db"
+      SESSION_COOKIE_SECURE: "false"
+      ADMIN_TOKEN: "ci-admin-token"
+      ASSESSMENT_RETENTION_DAYS: "90"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Compile application
+        run: python -m compileall -q app
+      - name: Validate browser JavaScript
+        run: |
+          node --check app/static/app.js
+          node --check app/static/assessment.js
+          node --check app/static/report.js
+          node --check app/static/recover.js
+      - name: Exercise paid consultation lifecycle
+        shell: bash
+        run: |
+          export DATA_ENCRYPTION_KEY="$(python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')"
+          python - <<'PY'
+          from datetime import datetime, timedelta, timezone
+
+          from fastapi.testclient import TestClient
+          from sqlalchemy import text
+
+          from app import db
+          from app.main import app
+          from app.security import create_private_session
+
+          db.init_db()
+
+          p1 = db.create_purchase(1900, {"utm_source": "ci"}, status="paid")
+          p2 = db.create_purchase(1900, {"utm_source": "ci-repeat"}, status="paid")
+
+          db.save_assessment(
+              p1["id"],
+              {"current_situation": "student"},
+              {"top_paths": []},
+          )
+
+          with TestClient(app) as client:
+              client.cookies.set("pf_session", create_private_session(p1["id"]))
+
+              first = client.get("/api/v1/access/me")
+              assert first.status_code == 200, first.text
+              first_data = first.json()
+              assert first_data["valid"] is True
+              assert first_data["completed"] is True
+              assert first_data["active_purchase_id"] == p1["id"]
+
+              # A second successful purchase is added to the same private browser vault.
+              second = client.get(
+                  "/checkout/demo-success",
+                  params={"token": p2["access_token"]},
+                  follow_redirects=False,
+              )
+              assert second.status_code == 303, second.text
+              client.cookies.update(second.cookies)
+
+              second_access = client.get("/api/v1/access/me")
+              assert second_access.status_code == 200, second_access.text
+              second_data = second_access.json()
+              assert second_data["active_purchase_id"] == p2["id"]
+              assert len(second_data["consultations"]) == 2
+              assert second_data["completed"] is False
+
+              # Draft progress is encrypted and can be resumed.
+              draft_save = client.post(
+                  "/api/v1/assessments/draft",
+                  json={
+                      "answers": {
+                          "help_text": "I want a direction I can test carefully.",
+                          "tech_comfort": 4,
+                      },
+                      "current_index": 7,
+                  },
+              )
+              assert draft_save.status_code == 200, draft_save.text
+
+              draft = client.get("/api/v1/assessments/draft")
+              assert draft.status_code == 200, draft.text
+              assert draft.json()["current_index"] == 7
+              assert draft.json()["answers"]["tech_comfort"] == 4
+
+              with db.ENGINE.connect() as conn:
+                  raw = conn.execute(
+                      text("SELECT answers_json FROM assessment_drafts WHERE purchase_id=:pid"),
+                      {"pid": p2["id"]},
+                  ).scalar_one()
+              assert raw.startswith("fernet:")
+
+              # The customer can switch back to an older active consultation.
+              switched = client.post(f"/api/v1/access/switch/{p1['id']}")
+              assert switched.status_code == 200, switched.text
+              client.cookies.update(switched.cookies)
+              switched_access = client.get("/api/v1/access/me").json()
+              assert switched_access["active_purchase_id"] == p1["id"]
+              assert switched_access["completed"] is True
+
+              # Backup keys can restore access on another browser without storing email.
+              backup = client.get("/api/v1/access/backup")
+              assert backup.status_code == 200, backup.text
+              backup_data = backup.json()
+              assert backup_data["reference"].startswith("PF-")
+              assert len(backup_data["key"]) >= 20
+
+          with TestClient(app) as restored:
+              restore = restored.post(
+                  "/api/v1/access/restore",
+                  json={
+                      "reference": backup_data["reference"],
+                      "key": backup_data["key"],
+                  },
+              )
+              assert restore.status_code == 200, restore.text
+              restored.cookies.update(restore.cookies)
+              access = restored.get("/api/v1/access/me")
+              assert access.status_code == 200
+              assert access.json()["active_purchase_id"] == p1["id"]
+
+          # Duplicate use of a completed purchase is blocked at the persistence layer.
+          try:
+              db.save_assessment(
+                  p1["id"],
+                  {"current_situation": "full_time_employee"},
+                  {"top_paths": []},
+              )
+              raise AssertionError("Expected completed purchase reuse to be blocked")
+          except RuntimeError as exc:
+              assert "already completed" in str(exc)
+
+          # Refund/dispute state revokes the entitlement.
+          p3 = db.create_purchase(1900, {}, status="paid")
+          db.set_payment_intent(p3["id"], "pi_ci_refund")
+          assert db.set_purchase_billing_state("pi_ci_refund", "refunded", "refund")
+          from app.access import purchase_access
+          assert purchase_access(db.get_purchase_by_id(p3["id"]))["valid"] is False
+
+          # Old purchases expire based on purchase time, not report-generation time.
+          old_paid = (datetime.now(timezone.utc) - timedelta(days=95)).isoformat()
+          with db.ENGINE.begin() as conn:
+              conn.execute(
+                  text("UPDATE purchases SET paid_at=:paid WHERE id=:pid"),
+                  {"paid": old_paid, "pid": p2["id"]},
+              )
+          db.privacy_maintenance(90)
+          assert db.get_assessment_draft(p2["id"]) is None
+
+          # Pending Stripe sessions can be marked expired without touching paid access.
+          pending = db.create_purchase(1900, {}, status="pending")
+          db.set_stripe_session(pending["id"], "cs_ci_expired")
+          assert db.mark_checkout_expired("cs_ci_expired") is True
+          assert db.get_purchase_by_id(pending["id"])["status"] == "expired"
+
+          print("Prelaunch consultation lifecycle passed")
+          PY
