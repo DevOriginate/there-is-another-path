@@ -29,6 +29,11 @@ def _legacy_consultation(answers: dict[str, Any], result: dict[str, Any]) -> dic
             for i, text in enumerate(primary.get("week_plan") or [])
         ],
         "alternatives": [],
+        "decision_rules": {
+            "continue": "Continue only if the real-world test produces useful evidence.",
+            "adjust": "Adjust the experiment when the path is plausible but the execution is not producing signal.",
+            "switch": "Re-rank the path when repeated evidence contradicts the recommendation."
+        },
         "anti_plan": ["Do not make a major irreversible decision from an older report without testing the recommendation in the real world."],
         "fit_highlights": [],
         "fit_watchouts": [],
@@ -84,6 +89,7 @@ def build_report(answers: dict[str, Any], result: dict[str, Any]) -> dict[str, A
         "fit_highlights": consultation.get("fit_highlights", []),
         "fit_watchouts": consultation.get("fit_watchouts", []),
         "alternative_analysis": consultation.get("alternatives", []),
+        "decision_rules": consultation.get("decision_rules", {}),
         "anti_plan": consultation.get("anti_plan", []),
         "first_move": consultation.get("first_move", ""),
         "week_plan": consultation.get("week_plan", []),
