@@ -19,7 +19,7 @@ from .engine import evaluate, load_paths
 from . import db
 from .payments import create_checkout, verify_success, handle_webhook
 from .reporting import build_report
-from .consultation import compose_unique_consultation, consultation_fragment_hashes
+from .consultation import CONSULTATION_VERSION, compose_unique_consultation, consultation_fragment_hashes
 from .security import validate_data_encryption_key, create_private_session, read_private_session
 from .config import (
     PRODUCT_PRICE_USD,
@@ -263,6 +263,7 @@ def health():
         "status": "ok",
         "app_version": "1.4.0-consultation-v2",
         "engine_version": "1.0.0",
+        "consultation_version": CONSULTATION_VERSION,
         "market_version": data["market_version"],
         "path_count": len(data["paths"]),
         "demo_mode": DEMO_MODE,
