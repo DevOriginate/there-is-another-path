@@ -5,8 +5,10 @@ from fastapi.responses import JSONResponse
 
 from . import db
 from .access import (
+    active_purchase,
     consultation_summary,
     purchase_access,
+    remove_access_cookie_entry,
     session_vault,
     switch_access_cookie,
 )
@@ -68,4 +70,13 @@ def switch_access(request: Request, purchase_id: int):
         }
     )
     switch_access_cookie(response, request, purchase_id)
+    return response
+
+
+@router.post("/api/v1/privacy/delete")
+def delete_active_consultation_data(request: Request):
+    purchase = active_purchase(request)
+    db.delete_personal_data(purchase["id"])
+    response = JSONResponse({"ok": True, "destination": "/"})
+    remove_access_cookie_entry(response, request, purchase["id"])
     return response
