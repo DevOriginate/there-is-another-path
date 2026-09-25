@@ -1,0 +1,77 @@
+name: Production Smoke
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  verify-render-production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      HEALTH_URL: https://there-is-another-path.onrender.com/health
+      EXPECTED_APP_VERSION: 1.4.0-consultation-v2
+      EXPECTED_CONSULTATION_VERSION: 2.1.0
+    steps:
+      - name: Wait for Render and verify production health
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          for attempt in $(seq 1 36); do
+            echo "Production check attempt \${attempt}/36"
+            body="$(curl --fail --silent --show-error --max-time 25 "$HEALTH_URL" || true)"
+
+            if [ -n "$body" ]; then
+              echo "$body"
+              if BODY="$body" python - <<'PY'
+          import json
+          import os
+          import sys
+
+          try:
+              data = json.loads(os.environ["BODY"])
+          except Exception:
+              sys.exit(1)
+
+          expected_app = os.environ["EXPECTED_APP_VERSION"]
+          expected_consultation = os.environ["EXPECTED_CONSULTATION_VERSION"]
+
+          checks = [
+              data.get("status") == "ok",
+              data.get("app_version") == expected_app,
+              data.get("consultation_version") == expected_consultation,
+              data.get("engine_version") == "1.0.0",
+              data.get("path_count") == 27,
+              data.get("demo_mode") is False,
+          ]
+
+          if all(checks):
+              print("Production Render health matches expected release.")
+              sys.exit(0)
+
+          print(
+              "Render responded, but the expected release is not live yet:",
+              {
+                  "status": data.get("status"),
+                  "app_version": data.get("app_version"),
+                  "consultation_version": data.get("consultation_version"),
+                  "engine_version": data.get("engine_version"),
+                  "path_count": data.get("path_count"),
+                  "demo_mode": data.get("demo_mode"),
+              },
+          )
+          sys.exit(1)
+          PY
+              then
+                exit 0
+              fi
+            fi
+
+            sleep 15
+          done
+
+          echo "Expected production release did not become healthy within the retry window."
+          exit 1
