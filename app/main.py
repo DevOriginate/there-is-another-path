@@ -19,6 +19,7 @@ from .engine import evaluate, load_paths
 from . import db
 from .payments import create_checkout, verify_success, handle_webhook
 from .reporting import build_report
+from .consultation import compose_unique_consultation
 from .security import validate_data_encryption_key, create_private_session, read_private_session
 from .config import (
     PRODUCT_PRICE_USD,
@@ -101,7 +102,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="There Is Another Path — The Path Finder",
-    version="1.3.0-security",
+    version="1.4.0-consultation-v2",
     description="Path Finder commercial MVP + explainable recommendation engine.",
     lifespan=lifespan,
     docs_url="/docs" if EXPOSE_API_DOCS else None,
@@ -260,7 +261,7 @@ def health():
     data = load_paths()
     return {
         "status": "ok",
-        "app_version": "1.3.0-security",
+        "app_version": "1.4.0-consultation-v2",
         "engine_version": "1.0.0",
         "market_version": data["market_version"],
         "path_count": len(data["paths"]),
@@ -376,7 +377,15 @@ def submit_assessment(request: Request, assessment: AssessmentInput):
     purchase = _paid_purchase_from_request(request)
     try:
         result = evaluate(assessment)
-        db.save_assessment(purchase["id"], assessment.model_dump(), result.model_dump())
+        result_payload = result.model_dump()
+        previous = db.get_recent_consultation_texts(limit=200)
+        result_payload["_consultation"] = compose_unique_consultation(
+            assessment.model_dump(),
+            result_payload,
+            purchase["id"],
+            previous,
+        )
+        db.save_assessment(purchase["id"], assessment.model_dump(), result_payload)
         return {"ok": True, "report_url": "/report"}
     except Exception as exc:
         raise HTTPException(500, f"Engine error: {exc}") from exc
