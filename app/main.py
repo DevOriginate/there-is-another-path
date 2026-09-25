@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import secrets
 import time
@@ -74,8 +75,15 @@ def _paid_purchase_from_request(request: Request) -> dict:
     return purchase
 
 
+async def _privacy_maintenance_loop():
+    while True:
+        await asyncio.sleep(6 * 60 * 60)
+        await asyncio.to_thread(db.privacy_maintenance, ASSESSMENT_RETENTION_DAYS)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    maintenance_task = None
     if not DEMO_MODE:
         validate_data_encryption_key()
         if ADMIN_TOKEN == "change-me-before-production":
@@ -83,7 +91,12 @@ async def lifespan(app: FastAPI):
     db.init_db()
     if not DEMO_MODE:
         db.privacy_maintenance(ASSESSMENT_RETENTION_DAYS)
-    yield
+        maintenance_task = asyncio.create_task(_privacy_maintenance_loop())
+    try:
+        yield
+    finally:
+        if maintenance_task:
+            maintenance_task.cancel()
 
 
 app = FastAPI(
@@ -109,6 +122,8 @@ def _rate_rule(path: str):
         return (10, 60)
     if path.startswith("/api/v1/feedback/"):
         return (20, 60)
+    if path == "/api/v1/privacy/delete":
+        return (5, 60)
     return _RATE_RULES.get(path)
 
 
@@ -167,6 +182,7 @@ async def security_headers(request: Request, call_next):
         or request.url.path.startswith("/report/")
         or request.url.path.startswith("/api/v1/access")
         or request.url.path.startswith("/api/v1/reports")
+        or request.url.path.startswith("/api/v1/privacy")
     )
     if private_path:
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
@@ -396,6 +412,15 @@ def feedback(request: Request, day: int, body: FeedbackPayload):
     purchase = _paid_purchase_from_request(request)
     db.save_feedback(purchase["id"], day, body.payload.model_dump())
     return {"ok": True}
+
+
+@app.post("/api/v1/privacy/delete")
+def delete_private_data(request: Request):
+    purchase = _paid_purchase_from_request(request)
+    db.delete_personal_data(purchase["id"])
+    response = JSONResponse({"ok": True})
+    _clear_access_cookie(response)
+    return response
 
 
 @app.get("/api/v1/admin/summary")
