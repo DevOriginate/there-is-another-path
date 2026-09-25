@@ -2310,3 +2310,49 @@ main > .section:nth-of-type(4) .card:hover{
     break-inside:avoid;
   }
 }
+
+
+/* PRELAUNCH RETURNING CUSTOMER UX */
+.consultation-history{
+  margin-top:24px;
+  padding-top:20px;
+  border-top:1px dashed var(--line-dark);
+}
+
+.consultation-history-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:12px 0;
+  border-bottom:1px solid var(--line);
+}
+
+.consultation-history-row span{
+  color:var(--muted);
+  font-size:.9rem;
+  line-height:1.4;
+}
+
+.consultation-history-row .btn{
+  flex:0 0 auto;
+}
+
+.new-consultation-btn{
+  margin-top:14px;
+}
+
+.returning-access{
+  display:inline-block;
+  font-family:var(--mono);
+  font-size:.9rem;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+
+@media (max-width:640px){
+  .consultation-history-row{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+}
