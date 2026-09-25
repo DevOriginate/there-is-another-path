@@ -23,6 +23,11 @@ def _legacy_consultation(answers: dict[str, Any], result: dict[str, Any]) -> dic
         ),
         "core_tension": "Use the recommendation as an experiment rather than a permanent identity decision.",
         "why_primary": " ".join(strengths[:3]) or "The overall profile aligns with this path.",
+        "constraint_read": (
+            constraints[0] + " Treat that as the first assumption to test rather than a detail to ignore."
+            if constraints else
+            "No single disqualifying constraint was detected, so the main risk is overconfidence."
+        ),
         "first_move": primary.get("first_move", "Define one small real-world test before making a larger commitment."),
         "week_plan": [
             {"week": i + 1, "title": f"Week {i + 1}", "action": text}
@@ -82,6 +87,7 @@ def build_report(answers: dict[str, Any], result: dict[str, Any]) -> dict[str, A
         "consultant_read": consultation.get("consultant_read", ""),
         "core_tension": consultation.get("core_tension", ""),
         "why_primary": consultation.get("why_primary", ""),
+        "constraint_read": consultation.get("constraint_read", ""),
         "decision_brief": consultation.get("decision_brief", {}),
         "client_snapshot": consultation.get("client_snapshot", {}),
         "client_words": consultation.get("client_words", ""),

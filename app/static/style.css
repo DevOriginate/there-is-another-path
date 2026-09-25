@@ -2179,3 +2179,134 @@ main > .section:nth-of-type(4) .card:hover{
 .switch-rule{
   border-top:5px solid var(--route);
 }
+
+
+.score-caption{
+  margin-top:-6px;
+  margin-bottom:8px;
+  color:var(--faint);
+  font-family:var(--mono);
+  font-size:.62rem;
+  letter-spacing:.055em;
+  text-transform:uppercase;
+}
+
+.case-against{
+  margin-top:26px;
+  padding:20px 0 0;
+  border-top:1px dashed var(--line-dark);
+}
+
+.case-against p{
+  margin:10px 0 0;
+  color:var(--ink-soft);
+}
+
+/* PRINT REFINEMENT V2.2 */
+
+
+@media print{
+  @page{
+    margin:12mm 14mm;
+  }
+
+  .section{
+    padding:12px 0!important;
+  }
+
+  .report-hero{
+    padding-bottom:18px!important;
+  }
+
+  .section > .eyebrow,
+  .section > h2,
+  .section > .lead{
+    break-after:avoid-page;
+    page-break-after:avoid;
+  }
+
+  .consultation-intro,
+  .decision-grid,
+  .grid2,
+  .grid3,
+  .decision-rules{
+    grid-template-columns:1fr!important;
+    gap:12px!important;
+  }
+
+  .situation-section .snapshot-card{
+    break-inside:auto!important;
+    page-break-inside:auto!important;
+  }
+
+  .snapshot-row{
+    break-inside:avoid;
+    page-break-inside:avoid;
+    padding:10px 14px!important;
+  }
+
+  .path-card,
+  .alternative-card,
+  .rule-card,
+  .consultant-note,
+  .tension-card,
+  .decision-main,
+  .decision-action,
+  .primary-reason-card,
+  .diagnostics-card,
+  .confidence-card,
+  .anti-plan,
+  .consultation-week{
+    break-inside:avoid;
+    page-break-inside:avoid;
+  }
+
+  .rule-card{
+    min-height:0!important;
+  }
+
+  .section h2{
+    font-size:32pt!important;
+    line-height:.98!important;
+    margin:8px 0 12px!important;
+  }
+
+  .report-hero h1{
+    font-size:38pt!important;
+    line-height:.96!important;
+  }
+
+  .consultant-note{
+    padding:22px 24px 22px 28px!important;
+  }
+
+  .consultant-note p{
+    font-size:18pt!important;
+    line-height:1.12!important;
+  }
+
+  .card{
+    padding:18px!important;
+  }
+
+  .first-move{
+    padding:18px!important;
+  }
+
+  .week{
+    padding:12px 0!important;
+  }
+
+  .alternatives-section,
+  .plan-section,
+  .rules-section,
+  .ranked-section,
+  .situation-section{
+    break-before:auto;
+    page-break-before:auto;
+  }
+
+  .privacy-controls{
+    break-inside:avoid;
+  }
+}

@@ -8,7 +8,7 @@ from typing import Any
 
 from .engine import load_paths
 
-CONSULTATION_VERSION = "2.1.0"
+CONSULTATION_VERSION = "2.2.0"
 MAX_SIMILARITY = 0.62
 MAX_VARIANTS = 128
 
@@ -252,7 +252,7 @@ def _case_numbers(answers: dict[str, Any], seed: int) -> dict[str, int]:
     hours = WEEKLY_HOURS.get(answers.get("weekly_time"), 5)
     urgency = answers.get("income_urgency")
     urgency_boost = 1.25 if urgency in {"asap", "30_days"} else 1.0 if urgency == "3_months" else 0.85
-    market_sample = max(4, min(18, round((hours * 0.75 + (seed % 3)) * urgency_boost)))
+    market_sample = max(6, min(18, round((hours * 0.75 + (seed % 3)) * urgency_boost)))
     outreach = max(4, min(30, round((hours * 1.35 + ((seed >> 3) % 5)) * urgency_boost)))
     work_blocks = max(2, min(10, round(hours / 2 + ((seed >> 6) % 2))))
     conversations = max(2, min(8, round(hours / 3 + ((seed >> 9) % 2))))
@@ -337,9 +337,11 @@ def _first_move(answers: dict[str, Any], primary: dict[str, Any], meta: dict[str
         )
     else:
         task = (
-            f"Use one 30-minute block {schedule} to {inspect} {numbers['market_sample']} real questions connected to {name}. "
+            f"Use one 30-minute block {schedule} to {inspect} {numbers['market_sample']} real questions connected to {name} "
+            f"in professional communities, discussion forums, LinkedIn posts, Reddit/Quora threads, course communities, or relevant marketplace listings. "
             f"{record.capitalize()} {evidence}, rank the questions by repetition, and choose one outcome your experience can help shorten. "
-            f"The first deliverable is a useful answer to one repeated problem, not a complete knowledge product."
+            f"Before the block ends, draft one concrete proof of usefulness: a 150-300 word answer, a one-page outline, or a 5-minute mini-lesson for the most repeated question. "
+            f"The first deliverable is evidence that you can make one problem clearer, not a complete knowledge product."
         )
 
     return (
@@ -390,7 +392,7 @@ def _week_plan(answers: dict[str, Any], primary: dict[str, Any], meta: dict[str,
             ("Find the repeated question", f"{inspect.capitalize()} {numbers['market_sample']} real questions connected to {name}. Group them by repeated outcome and select the one where your experience gives you the clearest useful shortcut."),
             ("Package one useful result", f"{build.capitalize()} one diagnostic, short lesson, advisory outline, template, or mini-session in {numbers['work_blocks']} focused blocks {schedule}. Solve one problem well instead of displaying everything you know."),
             ("Validate with the intended audience", f"{contact.capitalize()} {max(5, numbers['outreach']//2)} relevant people and ask what changed, what stayed unclear, and whether a deeper version would be worth paying for. {record.capitalize()} repeated language."),
-            ("Choose the delivery model", f"{decide.capitalize()} between consulting, training, a service, or a digital asset using demand and your delivery energy. Continue only where the audience's repeated problem overlaps with work you can sustain."),
+            ("Choose the delivery model", f"Compare consulting, training, a service, and a digital asset using demand, willingness to pay, and your delivery energy. Then {decide} which format deserves the next month. Continue only where the audience's repeated problem overlaps with work you can sustain."),
         ]
 
     if urgency in {"asap", "30_days"}:
@@ -499,7 +501,7 @@ def _decision_rules(answers: dict[str, Any], primary: dict[str, Any], seed: int)
         "switch": _choice(switch_options, seed, 71),
     }
 
-def _alternative_analysis(primary: dict[str, Any], alternative: dict[str, Any], seed: int, index: int) -> dict[str, Any]:
+def _alternative_analysis(answers: dict[str, Any], primary: dict[str, Any], alternative: dict[str, Any], seed: int, index: int) -> dict[str, Any]:
     p_scores = dict(_score_rows(primary))
     a_scores = dict(_score_rows(alternative))
     alt_edges = sorted(
@@ -527,7 +529,27 @@ def _alternative_analysis(primary: dict[str, Any], alternative: dict[str, Any], 
     elif "risk" in constraints:
         switch = "your tolerance for uncertainty increases"
     else:
-        switch = "one of the constraints holding it back changes materially"
+        family = alternative.get("family")
+        if family == "freelance":
+            switch = (
+                f"the advantage in {best_alt or 'flexibility'} becomes more important than the primary path's edge, "
+                "and you are willing to test demand through direct outreach instead of waiting for certainty"
+            )
+        elif family == "employment":
+            switch = (
+                f"you decide that {best_alt or 'structured employment'} matters more than the primary path's current advantage, "
+                "and employer feedback confirms that your existing capabilities can convert into interviews faster"
+            )
+        elif family == "service_business":
+            switch = (
+                f"you become willing to validate a customer problem directly and {best_alt or 'the business-side fit'} "
+                "starts producing stronger evidence than the primary path"
+            )
+        else:
+            switch = (
+                f"the advantage in {best_alt or 'knowledge fit'} becomes more important and a small audience test "
+                "shows stronger pull than the current primary recommendation"
+            )
 
     edge_phrase = (
         f"I would keep it visible because its relative advantage is {best_alt}."
@@ -687,7 +709,27 @@ def _compose(answers: dict[str, Any], result: dict[str, Any], purchase_id: int, 
 
     first_move = _first_move(answers, primary, meta, seed)
     week_plan = _week_plan(answers, primary, meta, seed)
-    alternatives = [_alternative_analysis(primary, alt, seed, idx) for idx, alt in enumerate(top[1:])]
+    alternatives = [_alternative_analysis(answers, primary, alt, seed, idx) for idx, alt in enumerate(top[1:])]
+
+    primary_constraints = primary.get("constraints") or []
+    if watch:
+        weakest = watch[0]
+        constraint_read = (
+            f"The strongest case against this recommendation is {weakest['label']} at {weakest['score']}. "
+            + (f"{primary_constraints[0]} " if primary_constraints else "")
+            + "That weakness is not something to explain away. It is the first thing the 30-day experiment must test. "
+            "If the evidence does not improve this weak point, the correct response is to re-rank the path rather than defend the score."
+        )
+    elif primary_constraints:
+        constraint_read = (
+            f"The main reason to challenge this recommendation is simple: {primary_constraints[0]} "
+            "That is why the first month is designed as a reversible test instead of a large commitment."
+        )
+    else:
+        constraint_read = (
+            "There is no single disqualifying constraint in the current profile, so the main risk is overconfidence. "
+            "The recommendation still has to earn trust through real-world evidence."
+        )
 
     client_words = (answers.get("twelve_month_change") or "").strip()[:600]
     help_words = (answers.get("help_text") or "").strip()[:500]
@@ -734,6 +776,7 @@ def _compose(answers: dict[str, Any], result: dict[str, Any], purchase_id: int, 
         "consultant_read": consultant_read,
         "core_tension": _tension_read(answers, primary, seed),
         "why_primary": why_primary,
+        "constraint_read": constraint_read,
         "first_move": first_move,
         "week_plan": week_plan,
         "alternatives": alternatives,
