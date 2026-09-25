@@ -1,7 +1,40 @@
 from __future__ import annotations
 
 from typing import Dict, List, Literal, Optional
+import re
 from pydantic import BaseModel, Field, field_validator
+
+
+
+_EMAIL_RE = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.I)
+_SSN_RE = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
+_CARD_CANDIDATE_RE = re.compile(r"(?<!\d)(?:\d[ -]?){13,19}(?!\d)")
+
+
+def _luhn_valid(candidate: str) -> bool:
+    digits = [int(ch) for ch in candidate if ch.isdigit()]
+    if not 13 <= len(digits) <= 19:
+        return False
+    checksum = 0
+    parity = len(digits) % 2
+    for i, digit in enumerate(digits):
+        value = digit
+        if i % 2 == parity:
+            value *= 2
+            if value > 9:
+                value -= 9
+        checksum += value
+    return checksum % 10 == 0
+
+
+def validate_free_text(value: str) -> str:
+    text = value or ""
+    if _EMAIL_RE.search(text) or _SSN_RE.search(text):
+        raise ValueError("Do not include email addresses, SSNs, account numbers, or other sensitive identifiers.")
+    for match in _CARD_CANDIDATE_RE.finditer(text):
+        if _luhn_valid(match.group(0)):
+            raise ValueError("Do not include payment card numbers or other sensitive identifiers.")
+    return text
 
 class AssessmentInput(BaseModel):
     age_band: Literal['18-24','25-34','35-44','45-54','55-64','65+']
@@ -30,6 +63,11 @@ class AssessmentInput(BaseModel):
     five_year_outcome: Literal['better_paying_career','work_independently','small_business','scalable_company','remote_anywhere','financial_stability','more_free_time','meaningful_work','semi_retirement','dont_know']
     primary_fear: Literal['losing_money','wasting_time','failing','starting_too_late','choosing_wrong','not_good_enough','giving_up_stability','others_think','dont_know_where_start']
     twelve_month_change: str = Field(default='', max_length=1500)
+
+    @field_validator('help_text','twelve_month_change')
+    @classmethod
+    def reject_sensitive_free_text(cls, v):
+        return validate_free_text(v)
 
     @field_validator('experience_areas')
     @classmethod
