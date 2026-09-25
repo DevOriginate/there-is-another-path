@@ -3,6 +3,28 @@ let qs=[],i=0,a={};
 const pretty=s=>String(s).replaceAll('_',' ').replace(/\b\w/g,c=>c.toUpperCase());
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 
+async function loadDraft(){
+ try{
+  const r=await fetch('/api/v1/assessments/draft',{credentials:'same-origin'});
+  if(!r.ok)return;
+  const d=await r.json();
+  if(d.completed){location.href='/report';return}
+  if(d.answers&&typeof d.answers==='object')a=d.answers;
+  if(Number.isInteger(d.current_index))i=Math.max(0,Math.min(qs.length-1,d.current_index));
+ }catch(err){console.warn('Could not restore assessment draft',err)}
+}
+
+async function saveDraft(currentIndex){
+ try{
+  await fetch('/api/v1/assessments/draft',{
+   method:'POST',
+   credentials:'same-origin',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({answers:a,current_index:currentIndex})
+  });
+ }catch(err){console.warn('Could not save assessment draft',err)}
+}
+
 async function init(){
  const access=await fetch('/api/v1/access/me',{credentials:'same-origin'});
  if(!access.ok){
