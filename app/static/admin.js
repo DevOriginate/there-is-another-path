@@ -11,6 +11,11 @@ function render(d){
       <div class="card"><div class="path-score">$${(d.revenue_cents/100).toFixed(2)}</div><div class="muted">Gross revenue</div></div>
       <div class="card"><div class="path-score">${d.paid_to_assessment_rate}%</div><div class="muted">Paid → assessment</div></div>
     </div>
+    <div class="grid grid3 admin-status-grid">
+      <div class="card"><div class="path-score">${d.purchases}</div><div class="muted">All purchase attempts</div></div>
+      <div class="card"><div class="path-score">${d.refunded||0}</div><div class="muted">Refunded</div></div>
+      <div class="card"><div class="path-score">${d.disputed||0}</div><div class="muted">Disputed</div></div>
+    </div>
     <div class="card admin-feedback-card">
       <h3>Progress feedback</h3>
       <p class="muted">Day 7: ${d.feedback['7']||0} · Day 14: ${d.feedback['14']||0} · Day 30: ${d.feedback['30']||0}</p>
