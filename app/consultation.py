@@ -754,7 +754,6 @@ def consultation_fragment_hashes(consultation: dict[str, Any]) -> list[str]:
     """Non-reversible hashes for the actionable instructions that must never be reused verbatim."""
     fragments = [consultation.get("first_move", "")]
     fragments.extend(item.get("action", "") for item in consultation.get("week_plan", []))
-    fragments.extend(consultation.get("decision_rules", {}).values())
     hashes = []
     for fragment in fragments:
         normalized = _normalized(fragment)
