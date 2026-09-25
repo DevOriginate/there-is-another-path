@@ -126,6 +126,85 @@ jobs:
           max_pairwise = max(similarity(a, b) for a, b in combinations(generated, 2))
           assert max_pairwise < 0.92, max_pairwise
 
+          # Different life situations must all produce complete, case-grounded consultations.
+          persona_updates = [
+              dict(
+                  age_band="18-24", current_situation="student", professional_direction="starting_over",
+                  primary_objectives=["learn_valuable_skill","remote_work"], financial_impact="500_month",
+                  available_capital="up_to_100", income_urgency="6_months", risk_tolerance="low",
+                  weekly_time="10_20", schedule="weekends", learning_horizon="3_6_months",
+                  experience_years="none", experience_areas=["none"],
+                  natural_activities=["technology","problem_solving","researching"], work_location="fully_remote",
+                  economic_model_preference="stable_paycheck", sales_comfort=2, tech_comfort=5,
+                  visibility_comfort=2, constraints=["limited_startup_money"], prospecting="prefer_not",
+                  five_year_outcome="better_paying_career", primary_fear="not_good_enough",
+                  help_text="I need a first serious direction without pretending I already have experience.",
+                  twelve_month_change="I want tangible proof that I can enter a stronger field."
+              ),
+              dict(
+                  age_band="35-44", current_situation="freelancer", professional_direction="idea_unsure",
+                  primary_objectives=["work_for_myself","extra_income"], financial_impact="2500_month",
+                  available_capital="500_1500", income_urgency="30_days", risk_tolerance="high",
+                  weekly_time="20_40", schedule="flexible", learning_horizon="1_3_months",
+                  experience_years="10_20", experience_areas=["marketing","creative","sales"],
+                  natural_activities=["designing","writing","selling","creating_content"], work_location="fully_remote",
+                  economic_model_preference="freelancing", sales_comfort=5, tech_comfort=3,
+                  visibility_comfort=4, constraints=["none"], prospecting="yes",
+                  five_year_outcome="work_independently", primary_fear="wasting_time",
+                  help_text="I already freelance, but I need a sharper offer and a better use of my experience.",
+                  twelve_month_change="I want a more focused service that earns more without scattering my attention."
+              ),
+              dict(
+                  age_band="25-34", current_situation="business_owner", professional_direction="several_ideas",
+                  primary_objectives=["start_business","extra_income"], financial_impact="build_business_long_term",
+                  available_capital="1500_5000", income_urgency="3_months", risk_tolerance="high",
+                  weekly_time="20_40", schedule="daytime", learning_horizon="1_3_months",
+                  experience_years="5_10", experience_areas=["entrepreneurship","customer_service","sales"],
+                  natural_activities=["talking","selling","organizing","leading"], work_location="no_preference",
+                  economic_model_preference="small_business", sales_comfort=5, tech_comfort=3,
+                  visibility_comfort=4, constraints=["none"], prospecting="yes",
+                  five_year_outcome="small_business", primary_fear="losing_money",
+                  help_text="I can sell and operate, but I want a business test that does not burn capital blindly.",
+                  twelve_month_change="I want one validated offer with repeatable demand rather than several half-built ideas."
+              ),
+              dict(
+                  age_band="55-64", current_situation="between_careers", professional_direction="want_different",
+                  primary_objectives=["use_experience_differently","meaningful_work"], financial_impact="money_not_primary",
+                  available_capital="500_1500", income_urgency="patient", risk_tolerance="moderate",
+                  weekly_time="10_20", schedule="flexible", learning_horizon="few_weeks",
+                  experience_years="30_plus", experience_areas=["management","education","administration"],
+                  natural_activities=["teaching","leading","helping_people","organizing"], work_location="mostly_remote",
+                  economic_model_preference="consulting", sales_comfort=3, tech_comfort=3,
+                  visibility_comfort=3, constraints=["avoid_physical_work"], prospecting="maybe",
+                  five_year_outcome="meaningful_work", primary_fear="starting_too_late",
+                  help_text="I want to use decades of experience differently without rebuilding from zero.",
+                  twelve_month_change="I want useful work that values judgment and experience more than title or age."
+              ),
+          ]
+
+          diverse_bodies = []
+          for idx, updates in enumerate(persona_updates, start=1):
+              persona_data = dict(base)
+              persona_data.update(updates)
+              persona = AssessmentInput(**persona_data)
+              persona_result = evaluate(persona).model_dump()
+              assert persona_result["top_paths"]
+              consultation = compose_unique_consultation(
+                  persona.model_dump(),
+                  persona_result,
+                  500 + idx,
+                  generated + diverse_bodies,
+              )
+              body = consultation_text(consultation)
+              assert len(consultation["consultant_read"]) > 220
+              assert "30-minute" in consultation["first_move"]
+              assert len(consultation["week_plan"]) == 4
+              assert all(len(w["action"]) > 120 for w in consultation["week_plan"])
+              assert consultation["decision_brief"]["primary_path"] == persona_result["top_paths"][0]["name"]
+              diverse_bodies.append(body)
+
+          assert len({body for body in diverse_bodies}) == len(diverse_bodies)
+
           # The client's instructions must not fall back to the old generic path blocks.
           path_map = {p["id"]: p for p in load_paths()["paths"]}
           primary_meta = path_map[result["top_paths"][0]["id"]]
