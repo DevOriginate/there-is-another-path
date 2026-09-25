@@ -66,7 +66,7 @@ def _paid_purchase_from_request(request: Request) -> dict:
     except ValueError as exc:
         raise HTTPException(403, "Valid paid access is required") from exc
     purchase = db.get_purchase_by_id(purchase_id)
-    if not purchase or purchase["status"] != "paid":
+    if not purchase or not purchase_access(purchase)["valid"]:
         raise HTTPException(403, "Valid paid access is required")
     return purchase
 
@@ -209,7 +209,7 @@ def start(request: Request, token: str | None = None):
     # One-release migration path for old paid links. New links never expose the token.
     if token:
         purchase = db.get_purchase_by_token(token)
-        if not purchase or purchase["status"] != "paid":
+        if not purchase or not purchase_access(purchase)["valid"]:
             return RedirectResponse("/", status_code=303)
         response = RedirectResponse("/start", status_code=303)
         _set_access_cookie(response, request, purchase["id"])
@@ -225,10 +225,10 @@ def report_page():
 @app.get("/report/{token}", include_in_schema=False)
 def legacy_report_page(request: Request, token: str):
     purchase = db.get_purchase_by_token(token)
-    if not purchase or purchase["status"] != "paid":
+    if not purchase or not purchase_access(purchase)["valid"]:
         return RedirectResponse("/", status_code=303)
     response = RedirectResponse("/report", status_code=303)
-    _set_access_cookie(response, purchase["id"])
+    _set_access_cookie(response, request, purchase["id"])
     return response
 
 
@@ -337,7 +337,7 @@ def checkout_success(request: Request, session_id: str):
             "<h1>Payment not verified</h1><p>Please contact support if you were charged.</p>",
             status_code=402,
         )
-    response = RedirectResponse(url="/start", status_code=303)
+    response = RedirectResponse(url="/start?welcome=1", status_code=303)
     _set_access_cookie(response, purchase["id"])
     return response
 
