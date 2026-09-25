@@ -687,9 +687,11 @@ def consultation_text(consultation: dict[str, Any]) -> str:
 
 
 def consultation_fragment_hashes(consultation: dict[str, Any]) -> list[str]:
-    """Non-reversible hashes used to prevent exact reuse of consultation sections."""
+    """Non-reversible hashes for the actionable instructions that must never be reused verbatim."""
+    fragments = [consultation.get("first_move", "")]
+    fragments.extend(item.get("action", "") for item in consultation.get("week_plan", []))
     hashes = []
-    for fragment in _paragraphs(consultation):
+    for fragment in fragments:
         normalized = _normalized(fragment)
         if normalized:
             hashes.append(hashlib.sha256(normalized.encode("utf-8")).hexdigest())
