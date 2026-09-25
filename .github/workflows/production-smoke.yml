@@ -11,7 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     env:
-      HEALTH_URL: https://there-is-another-path.onrender.com/health
+      HEALTH_URL: https://findanotherpath.com/health
+      WWW_HEALTH_URL: https://www.findanotherpath.com/health
+      LEGACY_HEALTH_URL: https://there-is-another-path.onrender.com/health
       EXPECTED_APP_VERSION: 1.5.2-launch-ux
       EXPECTED_CONSULTATION_VERSION: 2.2.0
     steps:
@@ -50,7 +52,7 @@ jobs:
           ]
 
           if all(checks):
-              print("Production Render health matches expected release.")
+              print("Primary custom domain health matches expected release.")
               sys.exit(0)
 
           print(
@@ -67,6 +69,24 @@ jobs:
           sys.exit(1)
           PY
               then
+                echo "Verifying www redirect..."
+                www_effective="$(curl --fail --silent --show-error --location --output /dev/null --write-out '%{url_effective}' --max-time 25 "$WWW_HEALTH_URL" || true)"
+                echo "www effective URL: $www_effective"
+                case "$www_effective" in
+                  https://findanotherpath.com/*) ;;
+                  *)
+                    echo "www did not redirect to the canonical custom domain."
+                    exit 1
+                    ;;
+                esac
+
+                echo "Verifying legacy Render fallback remains reachable..."
+                legacy_body="$(curl --fail --silent --show-error --max-time 25 "$LEGACY_HEALTH_URL" || true)"
+                if [ -z "$legacy_body" ]; then
+                  echo "Legacy Render fallback is not reachable."
+                  exit 1
+                fi
+
                 exit 0
               fi
             fi
