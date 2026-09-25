@@ -32,8 +32,13 @@ async function init(){
   return;
  }
  const aj=await access.json();
- if(aj.completed){location.href=aj.report_url;return}
+ if(!aj.valid){
+  sel('#app').innerHTML='<div class="card"><h2>Your consultation access has ended</h2><p class="muted">A purchase includes one consultation and a limited private access window. Start a new consultation when you are ready to reassess your situation.</p><a class="btn" href="/?new=1#offer">Start a new consultation</a></div>';
+  return;
+ }
+ if(aj.completed){location.href=aj.report_url||'/report';return}
  qs=(await fetch('/api/v1/assessment/schema').then(r=>r.json())).questions;
+ await loadDraft();
  render();
 }
 
