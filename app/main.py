@@ -57,20 +57,6 @@ def _clear_access_cookie(response) -> None:
     )
 
 
-def _paid_purchase_from_request(request: Request) -> dict:
-    cookie_value = request.cookies.get(SESSION_COOKIE_NAME)
-    if not cookie_value:
-        raise HTTPException(403, "Valid paid access is required")
-    try:
-        purchase_id = read_private_session(cookie_value, SESSION_MAX_AGE)
-    except ValueError as exc:
-        raise HTTPException(403, "Valid paid access is required") from exc
-    purchase = db.get_purchase_by_id(purchase_id)
-    if not purchase or not purchase_access(purchase)["valid"]:
-        raise HTTPException(403, "Valid paid access is required")
-    return purchase
-
-
 # Prelaunch entitlement resolver. This later definition intentionally supersedes
 # the legacy single-purchase resolver above while old cookies remain compatible.
 def _paid_purchase_from_request(request: Request) -> dict:
@@ -443,15 +429,6 @@ def feedback(request: Request, day: int, body: FeedbackPayload):
     purchase = _paid_purchase_from_request(request)
     db.save_feedback(purchase["id"], day, body.payload.model_dump())
     return {"ok": True}
-
-
-@app.post("/api/v1/privacy/delete")
-def delete_private_data(request: Request):
-    purchase = _paid_purchase_from_request(request)
-    db.delete_personal_data(purchase["id"])
-    response = JSONResponse({"ok": True})
-    _clear_access_cookie(response)
-    return response
 
 
 @app.get("/api/v1/admin/summary")
