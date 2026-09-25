@@ -1,6 +1,6 @@
 const $=(s)=>document.querySelector(s); const $$=(s)=>[...document.querySelectorAll(s)];
 function qs(){return Object.fromEntries(new URLSearchParams(location.search).entries())}
-function acquisition(){const q=qs(); return {utm_source:q.utm_source||'',utm_medium:q.utm_medium||'',utm_campaign:q.utm_campaign||'',utm_content:q.utm_content||'',utm_term:q.utm_term||'',fbclid:q.fbclid||'',landing_variant:'v1'}}
+function acquisition(){const q=qs(); return {utm_source:q.utm_source||'',utm_medium:q.utm_medium||'',utm_campaign:q.utm_campaign||'',utm_content:q.utm_content||'',utm_term:q.utm_term||'',landing_variant:'v1'}}
 async function config(){return fetch('/api/v1/config/public').then(r=>r.json())}
 function fire(name,data={}){if(window.fbq) fbq('track',name,data)}
 function installPixel(id){if(!id||window.fbq)return;!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init',id);fbq('track','PageView')}
