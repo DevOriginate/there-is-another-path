@@ -216,6 +216,18 @@ ${(d.conflicts||[]).length?`
 </section>
 
 <section class="section">
+  <div class="card access-backup-card">
+    <div class="eyebrow">Access on another device</div>
+    <h2>Save a private backup key.</h2>
+    <p class="muted">Your browser session is the normal way to reopen this consultation. If you want a backup for another browser or device, reveal the private key below and store it somewhere safe.</p>
+    <button class="btn secondary" id="show-backup-key">Show my backup key</button>
+    <div id="backup-key-box" class="hidden"></div>
+    <p class="privacy-hint">Anyone with the reference and backup key can restore this consultation while its access window is active. Do not share it publicly.</p>
+    <a href="/recover" class="muted">Already have a backup key? Restore access here.</a>
+  </div>
+</section>
+
+<section class="section">
   <div class="card">
     <div class="eyebrow">When your situation changes</div>
     <h2>Run a fresh consultation.</h2>
@@ -233,6 +245,7 @@ ${(d.conflicts||[]).length?`
 </section>`;
 
   sel('#print-report')?.addEventListener('click',()=>window.print());
+  sel('#show-backup-key')?.addEventListener('click',showBackupKey);
   document.querySelectorAll('.feedback-btn').forEach(btn=>btn.addEventListener('click',()=>feedback(Number(btn.dataset.day))));
   sel('#delete-private-data')?.addEventListener('click',deletePrivateData);
 }
@@ -278,3 +291,47 @@ init().catch(err=>{
     sel('#reload-report')?.addEventListener('click',()=>location.reload());
   }
 });
+
+
+async function showBackupKey(){
+  const button=sel('#show-backup-key');
+  const box=sel('#backup-key-box');
+  if(!button||!box)return;
+
+  button.disabled=true;
+  button.textContent='Loading private key…';
+
+  const r=await fetch('/api/v1/access/backup',{credentials:'same-origin'});
+  const j=await r.json().catch(()=>({}));
+
+  if(!r.ok){
+    button.disabled=false;
+    button.textContent='Show my backup key';
+    box.classList.remove('hidden');
+    box.textContent=j.detail||'Could not create the access backup.';
+    return;
+  }
+
+  const wrapper=document.createElement('div');
+  wrapper.className='backup-key-content';
+
+  const reference=document.createElement('p');
+  reference.textContent='Reference: '+j.reference;
+
+  const key=document.createElement('p');
+  key.textContent='Backup key: '+j.key;
+
+  const copy=document.createElement('button');
+  copy.type='button';
+  copy.className='btn secondary';
+  copy.textContent='Copy both';
+  copy.onclick=async()=>{
+    await navigator.clipboard.writeText('Reference: '+j.reference+'\nBackup key: '+j.key);
+    copy.textContent='Copied';
+  };
+
+  wrapper.append(reference,key,copy);
+  box.replaceChildren(wrapper);
+  box.classList.remove('hidden');
+  button.remove();
+}
