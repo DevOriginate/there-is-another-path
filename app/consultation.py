@@ -671,10 +671,18 @@ def _compose(answers: dict[str, Any], result: dict[str, Any], purchase_id: int, 
     )
 
     score_clause = ", ".join(f"{x['label']} ({x['score']})" for x in strengths)
-    why_primary = (
-        f"{primary.get('name')} ranks first because the combination is stronger than any single trait: {score_clause}. "
-        f"{(primary.get('strengths') or ['The path aligns with the strongest parts of your current profile.'])[0]} "
-        f"I am treating the score as a prioritization tool, not as proof that the path will work."
+    primary_strength = (primary.get("strengths") or ["The path aligns with the strongest parts of your current profile."])[0]
+    why_primary = _choice(
+        [
+            f"{primary.get('name')} ranks first because the profile is not relying on one flattering trait; the strongest combination is {score_clause}. {primary_strength} I am using the score to prioritize the first experiment, not to declare a permanent answer.",
+            f"The reason {primary.get('name')} wins is the stack of evidence rather than one standout number: {score_clause}. {primary_strength} That makes it the best first test from your current position, not a guarantee that it becomes your final destination.",
+            f"I would put {primary.get('name')} first because several important factors line up at the same time: {score_clause}. {primary_strength} The ranking tells us where to spend the next month of attention; reality still gets the final vote.",
+            f"{primary.get('name')} earns the first slot through breadth of fit: {score_clause}. {primary_strength} A broad fit is more useful here than a single exceptional score because your next move has to survive your actual constraints.",
+            f"The case for {primary.get('name')} is cumulative: {score_clause}. {primary_strength} That is enough to justify a disciplined test, but not enough to skip validation or treat the recommendation as destiny.",
+            f"{primary.get('name')} is the priority because the strongest parts of your profile reinforce one another: {score_clause}. {primary_strength} I would act on that pattern while keeping the commitment reversible.",
+        ],
+        seed,
+        73,
     )
 
     first_move = _first_move(answers, primary, meta, seed)
@@ -686,15 +694,35 @@ def _compose(answers: dict[str, Any], result: dict[str, Any], purchase_id: int, 
 
     confidence_score = result.get("confidence_score")
     if isinstance(confidence_score, (int, float)) and confidence_score >= 80:
-        confidence_note = "Your answers are internally consistent enough to justify action. That is confidence in the next experiment, not certainty about the final outcome."
+        confidence_note = _choice([
+            "Your answers are internally consistent enough to justify action. That is confidence in the next experiment, not certainty about the final outcome.",
+            "The profile is coherent enough to choose a first direction without pretending the future is settled. High confidence means the experiment is well founded; it does not mean the result is guaranteed.",
+            "There is enough consistency across your answers to stop comparing everything and start testing one path. The confidence belongs to the prioritization, not to a promised outcome.",
+            "The recommendation has a strong internal signal. Use that to act decisively on a small experiment while still letting real-world evidence overrule the score if necessary."
+        ], seed, 79)
     elif isinstance(confidence_score, (int, float)) and confidence_score >= 60:
-        confidence_note = "The direction is usable but not settled. The first month should be treated as evidence collection, because real-world response should be allowed to strengthen or weaken the recommendation."
+        confidence_note = _choice([
+            "The direction is usable but not settled. The first month should be treated as evidence collection, because real-world response should be allowed to strengthen or weaken the recommendation.",
+            "There is enough signal to choose a first test, but not enough to defend the path against contrary evidence. The next 30 days should reduce uncertainty rather than increase attachment.",
+            "Moderate confidence means the path deserves a controlled trial, not a large commitment. Let market or role feedback decide whether the score becomes more convincing.",
+            "The recommendation is actionable, but several assumptions still need contact with reality. Treat the month as a deliberate attempt to confirm or falsify them."
+        ], seed, 83)
     else:
-        confidence_note = "The profile still contains meaningful ambiguity. The report is therefore a structured hypothesis, and the first month should primarily reduce uncertainty rather than increase commitment."
+        confidence_note = _choice([
+            "The profile still contains meaningful ambiguity. The report is therefore a structured hypothesis, and the first month should primarily reduce uncertainty rather than increase commitment.",
+            "The signal is exploratory, so the value of this report is not certainty; it is a disciplined way to collect the missing evidence without making a reckless commitment.",
+            "There is too much ambiguity for a strong conclusion. That makes a small experiment more important, because the next decision should be earned by evidence rather than confidence.",
+            "Low confidence is not a failure of the assessment; it means your situation still supports multiple plausible paths. Use the first month to force useful differences between them."
+        ], seed, 89)
 
     decision_brief = {
         "primary_path": primary.get("name"),
-        "why_now": f"It currently gives the best balance of fit, constraints, and progress toward your goals {urgency}.",
+        "why_now": _choice([
+            f"It currently gives the best balance of fit, constraints, and progress toward your goals {urgency}.",
+            f"It is the path that best survives your present constraints while still moving you toward your goals {urgency}.",
+            f"It deserves the first test because it combines the strongest fit with a realistic way to make progress {urgency}.",
+            f"It is not the easiest path in theory; it is the one whose fit and feasibility make the most sense from where you are today {urgency}."
+        ], seed, 97),
         "strongest_advantage": strengths[0]["label"] if strengths else "overall alignment",
         "main_constraint": (primary.get("constraints") or [f"{focus_name}: {focus_action}."])[0],
         "first_move": first_move,
