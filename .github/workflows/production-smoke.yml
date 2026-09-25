@@ -12,8 +12,8 @@ jobs:
     timeout-minutes: 12
     env:
       HEALTH_URL: https://there-is-another-path.onrender.com/health
-      EXPECTED_APP_VERSION: 1.4.0-consultation-v2
-      EXPECTED_CONSULTATION_VERSION: 2.1.0
+      EXPECTED_APP_VERSION: 1.4.1-consultation-v2-2
+      EXPECTED_CONSULTATION_VERSION: 2.2.0
     steps:
       - name: Wait for Render and verify production health
         shell: bash
