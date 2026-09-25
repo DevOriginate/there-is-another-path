@@ -118,6 +118,7 @@ _rate_hits = defaultdict(deque)
 _RATE_RULES = {
     "/api/v1/checkout/session": (10, 60),
     "/api/v1/assessments/score": (30, 60),
+    "/api/v1/assessments/draft": (60, 60),
 }
 
 
@@ -128,6 +129,8 @@ def _rate_rule(path: str):
         return (20, 60)
     if path == "/api/v1/privacy/delete":
         return (5, 60)
+    if path.startswith("/api/v1/access/switch/"):
+        return (20, 60)
     return _RATE_RULES.get(path)
 
 
@@ -187,6 +190,7 @@ async def security_headers(request: Request, call_next):
         or request.url.path.startswith("/api/v1/access")
         or request.url.path.startswith("/api/v1/reports")
         or request.url.path.startswith("/api/v1/privacy")
+        or request.url.path.startswith("/api/v1/assessments/draft")
     )
     if private_path:
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
