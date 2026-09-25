@@ -344,7 +344,7 @@ def checkout_success(request: Request, session_id: str):
             status_code=402,
         )
     response = RedirectResponse(url="/start?welcome=1", status_code=303)
-    _set_access_cookie(response, purchase["id"])
+    _set_access_cookie(response, request, purchase["id"])
     return response
 
 
