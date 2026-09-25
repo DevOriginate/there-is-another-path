@@ -684,3 +684,13 @@ def compose_unique_consultation(
 
 def consultation_text(consultation: dict[str, Any]) -> str:
     return _consultation_text(consultation)
+
+
+def consultation_fragment_hashes(consultation: dict[str, Any]) -> list[str]:
+    """Non-reversible hashes used to prevent exact reuse of consultation sections."""
+    hashes = []
+    for fragment in _paragraphs(consultation):
+        normalized = _normalized(fragment)
+        if normalized:
+            hashes.append(hashlib.sha256(normalized.encode("utf-8")).hexdigest())
+    return list(dict.fromkeys(hashes))
