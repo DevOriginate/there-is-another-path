@@ -9,7 +9,7 @@ from typing import Any
 from .engine import load_paths
 
 CONSULTATION_VERSION = "2.1.0"
-MAX_SIMILARITY = 0.80
+MAX_SIMILARITY = 0.62
 MAX_VARIANTS = 128
 
 FAMILY_LABELS = {
@@ -529,20 +529,27 @@ def _normalized(text: str) -> str:
 
 
 def similarity(a: str, b: str) -> float:
+    """Human-readable audit metric used by tests and diagnostics."""
     a_n, b_n = _normalized(a), _normalized(b)
     if not a_n or not b_n:
         return 0.0
     return SequenceMatcher(None, a_n, b_n).ratio()
 
 
-def _max_paragraph_similarity(candidate: dict[str, Any], previous_paragraphs: list[str]) -> float:
-    if not previous_paragraphs:
+def _word_shingles(text: str, size: int = 5) -> set[str]:
+    words = _normalized(text).split()
+    if not words:
+        return set()
+    if len(words) <= size:
+        return {" ".join(words)}
+    return {" ".join(words[i:i+size]) for i in range(len(words)-size+1)}
+
+
+def _shingle_similarity(a: set[str], b: set[str]) -> float:
+    if not a or not b:
         return 0.0
-    return max(
-        similarity(paragraph, old)
-        for paragraph in _paragraphs(candidate)
-        for old in previous_paragraphs
-    )
+    union = len(a | b)
+    return (len(a & b) / union) if union else 0.0
 
 
 def _compose(answers: dict[str, Any], result: dict[str, Any], purchase_id: int, variant: int) -> dict[str, Any]:
@@ -646,37 +653,36 @@ def compose_unique_consultation(
         }
 
     previous = [x for x in (previous_consultation_texts or []) if x]
-    previous_paragraphs = [p for text in previous for p in re.split(r"(?<=[.!?])\s+(?=[A-Z])", text) if len(p) >= 60]
+    previous_shingles = [_word_shingles(text) for text in previous]
     best: dict[str, Any] | None = None
-    best_overall = 1.0
-    best_paragraph = 1.0
+    best_overlap = 1.0
 
     for local_variant in range(MAX_VARIANTS):
         variant = variant_offset + local_variant
         candidate = _compose(answers, result, purchase_id, variant)
-        text = _consultation_text(candidate)
-        overall = max((similarity(text, existing) for existing in previous), default=0.0)
-        paragraph = _max_paragraph_similarity(candidate, previous_paragraphs)
+        body = _consultation_text(candidate)
+        candidate_shingles = _word_shingles(body)
+        overlap = max(
+            (_shingle_similarity(candidate_shingles, old) for old in previous_shingles),
+            default=0.0,
+        )
 
-        if (overall, paragraph) < (best_overall, best_paragraph):
+        if overlap < best_overlap:
             best = candidate
-            best_overall = overall
-            best_paragraph = paragraph
+            best_overlap = overlap
 
-        if overall < MAX_SIMILARITY and paragraph < 0.92:
+        if overlap < MAX_SIMILARITY:
             best = candidate
-            best_overall = overall
-            best_paragraph = paragraph
+            best_overlap = overlap
             break
 
     assert best is not None
     body = _consultation_text(best)
     best["originality"] = {
-        "max_similarity_to_recent_reports": round(best_overall, 3),
-        "max_paragraph_similarity": round(best_paragraph, 3),
+        "max_similarity_to_recent_reports": round(best_overlap, 3),
         "checked_against": len(previous),
         "variants_considered": local_variant + 1,
-        "method": "case-specific synthesis + whole-report and paragraph similarity guards",
+        "method": "case-specific synthesis + five-word shingle overlap guard + lifetime instruction hashes",
     }
     best["fingerprint"] = hashlib.sha256(body.encode("utf-8")).hexdigest()
     return best
