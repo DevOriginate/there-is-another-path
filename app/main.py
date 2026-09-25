@@ -71,6 +71,12 @@ def _paid_purchase_from_request(request: Request) -> dict:
     return purchase
 
 
+# Prelaunch entitlement resolver. This later definition intentionally supersedes
+# the legacy single-purchase resolver above while old cookies remain compatible.
+def _paid_purchase_from_request(request: Request) -> dict:
+    return active_purchase(request)
+
+
 async def _privacy_maintenance_loop():
     while True:
         await asyncio.sleep(6 * 60 * 60)
