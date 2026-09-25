@@ -27,7 +27,7 @@ def create_checkout(acquisition: dict, email: str | None = None) -> dict:
         success_url=f"{PUBLIC_BASE_URL}/checkout/success?session_id={{CHECKOUT_SESSION_ID}}",
         cancel_url=f"{PUBLIC_BASE_URL}/?checkout=cancelled",
         client_reference_id=str(purchase['id']),
-        metadata={"purchase_id": str(purchase['id']), "access_token": purchase['access_token']},
+        metadata={"purchase_id": str(purchase['id'])},
         allow_promotion_codes=True,
     )
     if STRIPE_PRICE_ID:
@@ -57,14 +57,9 @@ def verify_success(session_id: str) -> dict | None:
             db.mark_paid_by_session(session_id)
         return db.get_purchase_by_session(session_id)
 
-    metadata = session.metadata or {}
-    access_token = metadata.get("access_token")
-    if not access_token:
-        return None
-
     return db.recover_paid_purchase(
         session_id=session_id,
-        access_token=access_token,
+        access_token=None,
         amount_cents=session.amount_total or PRODUCT_PRICE_USD * 100,
         currency=session.currency or "usd",
         email=None,
@@ -79,16 +74,15 @@ def handle_webhook(payload: bytes, signature: str):
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
         if session.get('payment_status') == 'paid':
-            metadata = session.get('metadata') or {}
-            access_token = metadata.get('access_token')
-            if access_token:
+            purchase = db.get_purchase_by_session(session['id'])
+            if purchase:
+                db.mark_paid_by_session(session['id'])
+            else:
                 db.recover_paid_purchase(
                     session_id=session['id'],
-                    access_token=access_token,
+                    access_token=None,
                     amount_cents=session.get('amount_total') or PRODUCT_PRICE_USD * 100,
                     currency=session.get('currency') or 'usd',
                     email=None,
                 )
-            else:
-                db.mark_paid_by_session(session['id'])
     return event['type']
