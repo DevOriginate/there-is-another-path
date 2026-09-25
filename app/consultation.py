@@ -8,7 +8,9 @@ from typing import Any
 
 from .engine import load_paths
 
-CONSULTATION_VERSION = "2.0.0"
+CONSULTATION_VERSION = "2.1.0"
+MAX_SIMILARITY = 0.80
+MAX_VARIANTS = 128
 
 FAMILY_LABELS = {
     "employment": "Career Path",
@@ -45,22 +47,22 @@ SCHEDULE_LABELS = {
     "weekends": "on weekends",
     "daytime": "during the day",
     "flexible": "in flexible blocks",
-    "changes": "whenever your changing schedule allows",
+    "changes": "around your changing schedule",
 }
 
 URGENCY_LABELS = {
     "asap": "as soon as possible",
-    "30_days": "within about 30 days",
-    "3_months": "within about three months",
-    "6_months": "within about six months",
-    "1_year": "within about a year",
+    "30_days": "inside the next 30 days",
+    "3_months": "inside roughly three months",
+    "6_months": "inside roughly six months",
+    "1_year": "inside roughly a year",
     "patient": "without forcing a short deadline",
 }
 
 FEAR_LABELS = {
     "losing_money": "losing money",
     "wasting_time": "wasting time",
-    "failing": "failing publicly or privately",
+    "failing": "failing",
     "starting_too_late": "starting too late",
     "choosing_wrong": "choosing the wrong direction",
     "not_good_enough": "not being good enough yet",
@@ -94,19 +96,97 @@ MODEL_LABELS = {
     "dont_know": "an open economic model",
 }
 
+EXPERIENCE_LABELS = {
+    "sales": "sales",
+    "customer_service": "customer service",
+    "management": "management",
+    "finance": "finance",
+    "technology": "technology",
+    "construction": "construction",
+    "healthcare": "healthcare",
+    "education": "education",
+    "logistics": "logistics",
+    "manufacturing": "manufacturing",
+    "marketing": "marketing",
+    "administration": "administration",
+    "hospitality": "hospitality",
+    "creative": "creative work",
+    "legal": "legal work",
+    "real_estate": "real estate",
+    "transportation": "transportation",
+    "retail": "retail",
+    "entrepreneurship": "entrepreneurship",
+    "other": "other work",
+    "none": "no established professional field",
+}
+
+_OPENERS = [
+    "If I were structuring this decision from your exact position, I would",
+    "The cleanest decision from the facts you gave me is to",
+    "Your assessment does not need another list of possibilities; it needs a priority, so I would",
+    "The strongest move available from your current position is to",
+    "I would not ask you to choose a forever identity here. I would",
+    "From a consultant's chair, the first move is clear enough to act on: you should",
+    "The useful question is not what sounds impressive; it is what deserves the first test. I would",
+    "Your constraints narrow the field more than your ambition does. That makes the first decision to",
+]
+
+_VERBS = {
+    "inspect": ["inspect", "review", "compare", "audit", "map", "study", "scan", "sample"],
+    "build": ["build", "assemble", "produce", "draft", "create", "shape", "prepare", "construct"],
+    "contact": ["contact", "approach", "reach", "message", "speak with", "put the offer in front of", "test with", "show"],
+    "record": ["record", "log", "capture", "write down", "track", "document", "note", "catalog"],
+    "decide": ["decide", "judge", "re-rank", "reassess", "review", "choose", "evaluate", "call"],
+}
+
+_EVIDENCE = {
+    "employment": [
+        "recurring requirements",
+        "proof employers repeatedly ask for",
+        "the skills that appear across real openings",
+        "the experience signals that survive across job descriptions",
+        "the tools and outputs the market repeats",
+        "the difference between nice-to-have and repeated requirements",
+    ],
+    "freelance": [
+        "buyer language",
+        "repeated paid requests",
+        "the outcomes clients are already asking for",
+        "how buyers describe the problem before they know the solution",
+        "the deliverables people are already purchasing",
+        "what separates a vague skill from a clear paid outcome",
+    ],
+    "service_business": [
+        "a painful customer problem",
+        "prospect response",
+        "willingness to discuss a pilot",
+        "repeated objections",
+        "evidence that the problem earns attention",
+        "a problem customers already spend time or money trying to solve",
+    ],
+    "knowledge": [
+        "repeated audience questions",
+        "a problem your experience can shorten",
+        "where people repeatedly ask for guidance",
+        "which outcomes your knowledge can make easier",
+        "evidence that the audience values the result, not just the information",
+        "questions that keep appearing despite free information already existing",
+    ],
+}
+
 
 def _pretty(value: Any) -> str:
     return str(value or "").replace("_", " ").replace("-", " ").title()
 
 
-def _pick(items: list[str], seed: int, offset: int = 0) -> str:
-    return items[(seed + offset) % len(items)]
-
-
 def _seed_for(answers: dict[str, Any], purchase_id: int, variant: int) -> int:
     payload = json.dumps(answers, sort_keys=True, separators=(",", ":"))
     digest = hashlib.sha256(f"{purchase_id}:{variant}:{payload}".encode("utf-8")).hexdigest()
-    return int(digest[:12], 16)
+    return int(digest[:16], 16)
+
+
+def _choice(items: list[str], seed: int, salt: int) -> str:
+    return items[(seed // (salt + 1) + salt * 17) % len(items)]
 
 
 def _path_metadata(path_id: str) -> dict[str, Any]:
@@ -135,143 +215,201 @@ def _watch_dimensions(path: dict[str, Any], limit: int = 2) -> list[dict[str, An
     return [{"label": label, "score": round(score, 1)} for label, score in rows[:limit]]
 
 
-def _constraint_focus(answers: dict[str, Any], primary: dict[str, Any]) -> str:
+def _experience_phrase(answers: dict[str, Any]) -> str:
+    areas = [EXPERIENCE_LABELS.get(x, _pretty(x).lower()) for x in answers.get("experience_areas") or [] if x != "none"]
+    if not areas:
+        return "without relying on an established professional specialty"
+    if len(areas) == 1:
+        return f"while using your background in {areas[0]}"
+    return f"while using your background in {areas[0]} and {areas[1]}"
+
+
+def _constraint_focus(answers: dict[str, Any], primary: dict[str, Any]) -> tuple[str, str]:
     constraints = set(answers.get("constraints") or [])
     path_constraints = " ".join(primary.get("constraints") or []).lower()
-    if "full_time_job" in constraints:
-        return "protect your current obligations while you test this"
     if "dependents" in constraints:
-        return "avoid a plan that depends on reckless time or income disruption"
+        return ("family stability", "avoid a test that depends on sudden income or schedule disruption")
+    if "full_time_job" in constraints:
+        return ("current obligations", "protect your job while you collect evidence outside working hours")
     if "limited_startup_money" in constraints or "startup capital" in path_constraints:
-        return "prove demand before spending meaningful money"
+        return ("capital discipline", "make demand prove itself before you spend meaningful money")
     if "need_work_from_home" in constraints:
-        return "keep the experiment compatible with working from home"
+        return ("location fit", "keep every early test compatible with working from home")
     if "limited_transportation" in constraints:
-        return "avoid making transportation a hidden requirement"
+        return ("transportation", "remove unnecessary travel from the validation plan")
     if "limited_computer_access" in constraints:
-        return "solve reliable computer access before committing to a computer-heavy path"
+        return ("tool access", "solve reliable computer access before making a computer-heavy commitment")
     if "limited_internet" in constraints:
-        return "keep internet requirements realistic until access improves"
+        return ("internet access", "design the test around your actual connectivity rather than ideal conditions")
     if "avoid_physical_work" in constraints:
-        return "avoid turning the experiment into physically demanding work"
+        return ("physical sustainability", "avoid a path design that quietly depends on physical intensity")
     if "prospecting" in path_constraints:
-        return "treat outreach tolerance as a real constraint, not a character flaw"
-    return "keep the experiment small enough that evidence can change your mind"
+        return ("sales tolerance", "treat outreach tolerance as a design constraint rather than a personality defect")
+    return ("reversibility", "keep the experiment cheap enough that new evidence can change the decision")
 
 
-def _tension_read(answers: dict[str, Any], primary: dict[str, Any]) -> str:
+def _case_numbers(answers: dict[str, Any], seed: int) -> dict[str, int]:
+    hours = WEEKLY_HOURS.get(answers.get("weekly_time"), 5)
+    urgency = answers.get("income_urgency")
+    urgency_boost = 1.25 if urgency in {"asap", "30_days"} else 1.0 if urgency == "3_months" else 0.85
+    market_sample = max(4, min(18, round((hours * 0.75 + (seed % 3)) * urgency_boost)))
+    outreach = max(4, min(30, round((hours * 1.35 + ((seed >> 3) % 5)) * urgency_boost)))
+    work_blocks = max(2, min(10, round(hours / 2 + ((seed >> 6) % 2))))
+    conversations = max(2, min(8, round(hours / 3 + ((seed >> 9) % 2))))
+    return {
+        "market_sample": market_sample,
+        "outreach": outreach,
+        "work_blocks": work_blocks,
+        "conversations": conversations,
+    }
+
+
+def _tension_read(answers: dict[str, Any], primary: dict[str, Any], seed: int) -> str:
     urgency = answers.get("income_urgency")
     model = answers.get("economic_model_preference")
     fear = FEAR_LABELS.get(answers.get("primary_fear"), _pretty(answers.get("primary_fear")).lower())
     family = primary.get("family")
+    focus_name, focus_action = _constraint_focus(answers, primary)
+    bridge = _choice(
+        [
+            "That tension should change the design of the experiment, not become an excuse to stay still.",
+            "That conflict is useful because it tells us what the experiment must protect.",
+            "That is not a reason to abandon the path; it is a reason to make the test more disciplined.",
+            "The contradiction matters only if we ignore it. Here, it becomes a design requirement.",
+        ],
+        seed,
+        5,
+    )
 
     if urgency in {"asap", "30_days"} and family in {"service_business", "freelance", "knowledge"}:
         return (
-            f"You want movement quickly, but this path still requires proof before trust. Your fear of {fear} makes that tension sharper. "
-            "The answer is not to force certainty; it is to run a smaller test with a short feedback loop."
+            f"You want income movement {URGENCY_LABELS[urgency]}, while {primary.get('name')} still needs market proof. "
+            f"Your fear of {fear} raises the cost of a vague experiment. {bridge} The practical rule is {focus_action}; "
+            f"{focus_name} is the boundary I would not casually violate."
         )
     if model == "stable_paycheck" and family != "employment":
         return (
-            f"There is a real tension between your preference for {MODEL_LABELS[model]} and a path that carries more independence. "
-            f"Because your stated fear is {fear}, this recommendation should begin as a controlled side experiment rather than an identity-level leap."
+            f"You prefer {MODEL_LABELS[model]}, yet the strongest current path asks for more independence. "
+            f"That is the central tension in this case, especially with your concern about {fear}. {bridge} "
+            f"I would preserve {focus_name} and {focus_action} before increasing commitment."
         )
     if model in {"freelancing", "small_business", "scalable_business", "consulting"} and family == "employment":
         return (
-            f"You are drawn toward {MODEL_LABELS.get(model, 'independence')}, yet the strongest immediate path is employment-based. "
-            "That is not a contradiction: the employment route can be used as a skill, credibility, and cash-flow bridge rather than a permanent destination."
+            f"Your long-term pull is toward {MODEL_LABELS.get(model, 'independence')}, but the immediate winner is employment-based. "
+            f"I would use that route as a bridge for skill, credibility, and cash flow rather than treat it as a permanent identity. "
+            f"{bridge} The boundary is simple: {focus_action}."
         )
     return (
-        f"Your biggest psychological risk is {fear}. The report should not try to talk you out of that concern. "
-        "It should give you an experiment small enough that the result teaches you something before the cost becomes meaningful."
+        f"The main psychological risk is {fear}; the main operating boundary is {focus_name}. "
+        f"{bridge} So the plan is built to {focus_action} while collecting evidence fast enough to justify the next decision."
     )
 
 
 def _first_move(answers: dict[str, Any], primary: dict[str, Any], meta: dict[str, Any], seed: int) -> str:
     family = primary.get("family")
     name = primary.get("name", "this path")
-    hours = WEEKLY_HOURS.get(answers.get("weekly_time"), 5)
-    sample_count = max(3, min(10, round(hours * 0.8)))
+    numbers = _case_numbers(answers, seed)
     schedule = SCHEDULE_LABELS.get(answers.get("schedule"), "in your next available block")
-    urgency = URGENCY_LABELS.get(answers.get("income_urgency"), "on your current timeline")
+    evidence = _choice(_EVIDENCE.get(family, _EVIDENCE["employment"]), seed, 7)
+    inspect = _choice(_VERBS["inspect"], seed, 11)
+    record = _choice(_VERBS["record"], seed, 13)
+    focus_name, focus_action = _constraint_focus(answers, primary)
     description = meta.get("description", "").rstrip(".")
+    experience = _experience_phrase(answers)
 
     if family == "employment":
-        variants = [
-            f"Use one 30-minute block {schedule} to open {sample_count} current {name} roles. Write down the three requirements that repeat most often, then mark which one you can already prove and which one needs evidence. Do not apply yet; first learn what the market is actually asking for.",
-            f"Spend 30 minutes {schedule} comparing {sample_count} live {name} openings. Build a two-column note: 'already credible' and 'must prove'. Your first decision is which missing requirement can be demonstrated fastest, not which course looks most impressive.",
-            f"Take 30 minutes {schedule} and inspect {sample_count} real {name} job descriptions. Circle recurring tools, outputs, and experience signals. Choose one signal you can produce evidence for this week. That becomes the first asset in your transition."
-        ]
+        task = (
+            f"Use one 30-minute block {schedule} to {inspect} {numbers['market_sample']} live {name} openings. "
+            f"{record.capitalize()} {evidence}, then separate what you can already demonstrate from what still needs proof. "
+            f"Pick one missing signal that can be demonstrated this week {experience}."
+        )
     elif family == "freelance":
-        variants = [
-            f"Use 30 minutes {schedule} to define one buyer and one narrow outcome for {name}. Then find {sample_count} real examples of people already paying for that outcome. Your goal is to confirm a market before polishing a portfolio.",
-            f"Spend 30 minutes {schedule} turning {name} into a one-sentence offer: buyer + problem + deliverable. Compare it against {sample_count} real freelance requests or competitor offers and rewrite it until a stranger could understand what is being bought.",
-            f"In one 30-minute block {schedule}, choose the smallest sellable version of {name}. Collect {sample_count} examples of demand, note the language buyers use, and use those words to define your first test offer."
-        ]
+        task = (
+            f"Use one 30-minute block {schedule} to {inspect} {numbers['market_sample']} real requests or competing offers around {name}. "
+            f"{record.capitalize()} {evidence}, then write a one-sentence offer with one buyer, one problem, and one deliverable. "
+            f"Choose the smallest version you could responsibly test {experience}."
+        )
     elif family == "service_business":
-        variants = [
-            f"Use 30 minutes {schedule} to choose one customer type for {name}, write one concrete problem you can solve for them, and identify {sample_count} prospects you could realistically reach. Do not build branding or infrastructure yet; prove that the problem earns attention.",
-            f"Spend 30 minutes {schedule} reducing {name} to one buyer, one pain point, and one observable result. Find {sample_count} local or online prospects that match. The first signal you need is response, not a logo, website, or business card.",
-            f"Take a 30-minute block {schedule} and define a paid pilot for {name}: who it is for, what changes, and what is explicitly not included. Build a list of {sample_count} reachable prospects. Your next step is market contact, not business decoration."
-        ]
+        task = (
+            f"Use one 30-minute block {schedule} to define one buyer for {name} and {inspect} {numbers['market_sample']} examples of that buyer's problem. "
+            f"{record.capitalize()} {evidence}, then identify {max(4, numbers['outreach']//2)} reachable prospects. "
+            f"Do not build brand assets yet; the first asset is a problem statement that earns a response."
+        )
     else:
-        variants = [
-            f"Use 30 minutes {schedule} to identify one problem your existing experience could help someone solve through {name}. Write the before-and-after outcome, then list {sample_count} people or communities where that problem already appears. Validate the pain before packaging the knowledge.",
-            f"Spend 30 minutes {schedule} turning {name} into one teachable or advisory outcome. Find {sample_count} examples of the audience asking for help with that outcome. Your first evidence should be a repeated problem, not your opinion that the idea is useful.",
-            f"In one 30-minute block {schedule}, choose a single outcome for {name} that you can explain from experience. Collect {sample_count} real questions from the intended audience and rank them by frequency. Build from the problem that repeats."
-        ]
-    move = _pick(variants, seed)
-    return f"{move} You are trying to create evidence {urgency}; {_constraint_focus(answers, primary)}. Path context: {description}."
+        task = (
+            f"Use one 30-minute block {schedule} to {inspect} {numbers['market_sample']} real questions connected to {name}. "
+            f"{record.capitalize()} {evidence}, rank the questions by repetition, and choose one outcome your experience can help shorten. "
+            f"The first deliverable is a useful answer to one repeated problem, not a complete knowledge product."
+        )
+
+    return (
+        f"{task} The rule for this first move is {focus_action}. "
+        f"That keeps {focus_name} protected while testing a path whose practical purpose is to {description.lower()}."
+    )
 
 
 def _week_plan(answers: dict[str, Any], primary: dict[str, Any], meta: dict[str, Any], seed: int) -> list[dict[str, Any]]:
     family = primary.get("family")
     name = primary.get("name", "this path")
-    hours = WEEKLY_HOURS.get(answers.get("weekly_time"), 5)
-    blocks = max(2, min(8, round(hours / 2)))
-    exposure = max(4, min(24, round(hours * 1.5)))
+    numbers = _case_numbers(answers, seed)
     schedule = SCHEDULE_LABELS.get(answers.get("schedule"), "in your available time")
     urgency = answers.get("income_urgency")
-    fast = urgency in {"asap", "30_days"}
     fear = FEAR_LABELS.get(answers.get("primary_fear"), "choosing wrong")
+    goal = GOAL_LABELS.get((answers.get("primary_objectives") or ["dont_know"])[0], "create a useful next option")
+    focus_name, focus_action = _constraint_focus(answers, primary)
+    inspect = _choice(_VERBS["inspect"], seed, 19)
+    build = _choice(_VERBS["build"], seed, 23)
+    contact = _choice(_VERBS["contact"], seed, 29)
+    record = _choice(_VERBS["record"], seed, 31)
+    decide = _choice(_VERBS["decide"], seed, 37)
+    evidence = _choice(_EVIDENCE.get(family, _EVIDENCE["employment"]), seed, 41)
 
     if family == "employment":
-        actions = [
-            ("Market map", f"Study {max(6, exposure)} live {name} openings and build a requirement frequency list. Choose one target role variant rather than treating the whole field as one job."),
-            ("Proof", f"Use roughly {blocks} focused work blocks {schedule} to create or improve one proof-of-work artifact that demonstrates the most repeated missing requirement."),
-            ("Positioning", f"Rewrite your resume/profile around evidence, not adjectives. Then ask {max(2, blocks//2)} people in or near the field for a 15-minute reality check on the artifact and target role."),
-            ("Controlled applications", f"Send {max(5, exposure//2)} targeted applications or direct introductions. Track replies, objections, and missing requirements. Continue only if the feedback supports the role hypothesis; otherwise revise the target."),
+        stages = [
+            ("Define the market target", f"{inspect.capitalize()} {numbers['market_sample']} current {name} openings and {record} {evidence}. Narrow the target to the role variant where your current evidence is closest to repeated demand."),
+            ("Build one proof signal", f"Use {numbers['work_blocks']} focused work blocks {schedule} to {build} one proof-of-work asset for the most important missing requirement. The asset must be showable, not just studied."),
+            ("Get informed friction", f"{contact.capitalize()} {numbers['conversations']} people in or near the target role and ask where your evidence still looks weak. Update the asset or positioning from repeated criticism, not from one person's taste."),
+            ("Run a controlled market test", f"Send {max(5, numbers['outreach']//2)} targeted applications or introductions. {record.capitalize()} replies, silence, objections, and requirement gaps, then {decide} whether the role hypothesis deserves another month."),
         ]
     elif family == "freelance":
-        actions = [
-            ("Offer hypothesis", f"Choose one buyer type and one narrow deliverable for {name}. Review {max(6, exposure)} existing requests or competing offers and write down how buyers describe the problem."),
-            ("Credibility asset", f"Use about {blocks} focused blocks {schedule} to build one sample, teardown, before/after example, or mini-case that demonstrates the deliverable without pretending you already have client results."),
-            ("Market contact", f"Put the offer in front of {exposure} relevant prospects, communities, or posted opportunities. Keep one message and one offer stable long enough to learn what is actually failing."),
-            ("Decision week", f"Review response rate, conversations, objections, and willingness to pay. If nobody cares, change the buyer/problem before changing your entire career direction. If people engage, tighten the offer and seek the first small paid engagement."),
+        stages = [
+            ("Narrow the paid outcome", f"{inspect.capitalize()} {numbers['market_sample']} real buyer requests around {name} and {record} {evidence}. Reduce the offer until a buyer can understand the outcome without needing your biography."),
+            ("Create one credibility asset", f"Use {numbers['work_blocks']} focused blocks {schedule} to {build} a sample, teardown, mini-case, or before/after demonstration that proves the deliverable without inventing client results."),
+            ("Put the offer in contact with reality", f"{contact.capitalize()} {numbers['outreach']} relevant prospects, communities, or live opportunities using one stable offer long enough to learn. {record.capitalize()} what produces replies and what produces silence."),
+            ("Price the evidence, not the fantasy", f"{decide.capitalize()} using response quality, conversations, objections, and willingness to pay. If interest is real, seek the smallest responsible paid engagement; if not, change buyer or problem before abandoning the whole field."),
         ]
     elif family == "service_business":
-        actions = [
-            ("Problem selection", f"Define one customer segment and one costly or annoying problem that {name} can address. Verify it through {max(5, exposure//2)} real customer observations or conversations."),
-            ("Pilot design", f"Create the smallest responsible pilot: clear scope, simple price hypothesis, delivery steps, and what success looks like. Limit setup work to about {blocks} focused blocks {schedule}."),
-            ("Demand test", f"Reach {exposure} realistic prospects through the channel you can tolerate. Ask for a conversation or pilot, not vague feedback. Record objections exactly as they are stated."),
-            ("Evidence review", f"Decide using behavior: replies, calls, pilot interest, and actual willingness to pay. Do not increase spending until the market gives you a reason. If interest exists, refine delivery; if not, revise customer/problem pairing."),
+        stages = [
+            ("Choose the expensive annoyance", f"{inspect.capitalize()} {numbers['market_sample']} examples of the customer problem behind {name}. {record.capitalize()} where the problem costs time, money, missed leads, rework, or frustration, and choose one segment to test."),
+            ("Design a bounded pilot", f"{build.capitalize()} the smallest responsible pilot in {numbers['work_blocks']} focused blocks {schedule}: clear scope, simple price hypothesis, delivery steps, exclusions, and one observable success condition."),
+            ("Ask the market for behavior", f"{contact.capitalize()} {numbers['outreach']} realistic prospects through a channel you can tolerate. Ask for a short conversation or pilot, not compliments. {record.capitalize()} objections word-for-word."),
+            ("Earn the right to invest more", f"{decide.capitalize()} from calls, pilot interest, willingness to pay, and delivery feasibility. Spend more only if behavior supports the idea; otherwise revise the customer/problem pairing before adding infrastructure."),
         ]
     else:
-        actions = [
-            ("Audience problem", f"Choose one audience and collect {max(6, exposure)} real questions related to {name}. Group them into repeated problems and pick the one where your experience gives you the clearest useful point of view."),
-            ("Minimum useful asset", f"Use about {blocks} focused blocks {schedule} to create one small useful asset: diagnostic, lesson, outline, template, or short advisory session. It should solve one problem, not display everything you know."),
-            ("Live validation", f"Put that asset or session in front of {max(5, exposure//2)} relevant people. Ask what changed, what remained unclear, and whether they would pay for a deeper version."),
-            ("Packaging decision", f"Use the feedback to choose between service, training, consulting, or digital-product packaging. Continue only where repeated demand and your delivery energy overlap."),
+        stages = [
+            ("Find the repeated question", f"{inspect.capitalize()} {numbers['market_sample']} real questions connected to {name}. Group them by repeated outcome and select the one where your experience gives you the clearest useful shortcut."),
+            ("Package one useful result", f"{build.capitalize()} one diagnostic, short lesson, advisory outline, template, or mini-session in {numbers['work_blocks']} focused blocks {schedule}. Solve one problem well instead of displaying everything you know."),
+            ("Validate with the intended audience", f"{contact.capitalize()} {max(5, numbers['outreach']//2)} relevant people and ask what changed, what stayed unclear, and whether a deeper version would be worth paying for. {record.capitalize()} repeated language."),
+            ("Choose the delivery model", f"{decide.capitalize()} between consulting, training, a service, or a digital asset using demand and your delivery energy. Continue only where the audience's repeated problem overlaps with work you can sustain."),
         ]
 
-    if fast:
-        actions[0] = (actions[0][0], actions[0][1] + " Because your timeline is short, finish this stage within the first few days.")
-        actions[2] = (actions[2][0], actions[2][1] + " Prioritize direct market contact over additional study.")
+    if urgency in {"asap", "30_days"}:
+        stages[0] = (stages[0][0], stages[0][1] + " Finish this stage in the first three days because your income timeline does not justify a long research phase.")
+        stages[2] = (stages[2][0], stages[2][1] + " Market contact outranks additional study this week.")
+    elif urgency in {"1_year", "patient"}:
+        stages[1] = (stages[1][0], stages[1][1] + " Your timeline gives you permission to favor durable evidence over speed.")
 
-    actions[3] = (actions[3][0], actions[3][1] + f" Your fear of {fear} is exactly why this review uses evidence instead of optimism.")
-    return [{"week": i + 1, "title": title, "action": action} for i, (title, action) in enumerate(actions)]
+    stages[3] = (
+        stages[3][0],
+        stages[3][1]
+        + f" This review exists because your fear is {fear}; evidence should carry more weight than optimism. "
+        + f"If the month does not move you closer to '{goal}', re-rank the path instead of defending it."
+    )
+
+    return [{"week": i + 1, "title": title, "action": action} for i, (title, action) in enumerate(stages)]
 
 
-def _alternative_analysis(primary: dict[str, Any], alternative: dict[str, Any]) -> dict[str, Any]:
+def _alternative_analysis(primary: dict[str, Any], alternative: dict[str, Any], seed: int, index: int) -> dict[str, Any]:
     p_scores = dict(_score_rows(primary))
     a_scores = dict(_score_rows(alternative))
     alt_edges = sorted(
@@ -284,8 +422,8 @@ def _alternative_analysis(primary: dict[str, Any], alternative: dict[str, Any]) 
         key=lambda x: x[1],
         reverse=True,
     )
-    best_alt = next((label for label, gap in alt_edges if gap >= 4), None)
-    best_primary = next((label for label, gap in primary_edges if gap >= 4), None)
+    best_alt = next((label for label, gap in alt_edges if gap >= 3), None)
+    best_primary = next((label for label, gap in primary_edges if gap >= 3), None)
     constraints = " ".join(alternative.get("constraints") or []).lower()
 
     if "income timeline" in constraints or "longer to validate" in constraints:
@@ -301,34 +439,63 @@ def _alternative_analysis(primary: dict[str, Any], alternative: dict[str, Any]) 
     else:
         switch = "one of the constraints holding it back changes materially"
 
+    edge_phrase = (
+        f"I would keep it visible because its relative advantage is {best_alt}."
+        if best_alt
+        else _choice(
+            [
+                "I would keep it as a live backup, but it does not currently dominate a decisive factor.",
+                "It is credible enough to preserve, but not strong enough to take the first test slot.",
+                "There is real fit here, just not enough to displace the primary path today.",
+            ],
+            seed,
+            47 + index,
+        )
+    )
+    why = (
+        f"{primary.get('name')} stays ahead because it is stronger on {best_primary}."
+        if best_primary
+        else f"{primary.get('name')} holds a small but broader advantage across the full profile."
+    )
+
     return {
         "name": alternative.get("name"),
         "score": alternative.get("score"),
         "band": alternative.get("band"),
         "family_label": FAMILY_LABELS.get(alternative.get("family"), _pretty(alternative.get("family"))),
-        "upside": f"It has a relative edge on {best_alt}." if best_alt else "It remains credible, but does not clearly dominate the primary path on your strongest factors.",
-        "why_below": (
-            f"It ranks below {primary.get('name')} mainly because the primary path is stronger on {best_primary}."
-            if best_primary
-            else f"Its total fit is slightly weaker than {primary.get('name')} across the full profile."
-        ),
+        "upside": edge_phrase,
+        "why_below": why,
         "reconsider_if": switch,
     }
 
 
-def _anti_plan(answers: dict[str, Any], primary: dict[str, Any]) -> list[str]:
+def _anti_plan(answers: dict[str, Any], primary: dict[str, Any], seed: int) -> list[str]:
     family = primary.get("family")
     constraints = set(answers.get("constraints") or [])
-    items = ["Do not confuse more research with progress once the first real-world test is defined."]
+    fear = FEAR_LABELS.get(answers.get("primary_fear"), "choosing wrong")
+    items = [
+        _choice(
+            [
+                "Do not convert uncertainty into endless research once the first real-world test is defined.",
+                "Do not keep studying after you already know what evidence the next decision requires.",
+                "Do not mistake preparation for progress once the market-facing experiment is ready.",
+                "Do not add another planning layer when the missing information can only come from reality.",
+            ],
+            seed,
+            53,
+        )
+    ]
     if "full_time_job" in constraints or answers.get("income_urgency") in {"asap", "30_days"}:
-        items.append("Do not resign from reliable income merely because this path scored well. Make the path earn that decision with evidence.")
+        items.append("Do not give up reliable income because a score looks encouraging. Make the path earn a larger commitment through evidence.")
     if family in {"service_business", "freelance", "knowledge"}:
-        items.append("Do not spend the first month on branding, legal structure, complex tooling, or a polished website before validating demand.")
+        items.append("Do not spend the first month polishing a brand, legal structure, automation stack, or website while demand is still hypothetical.")
     if family == "employment":
-        items.append("Do not collect certificates indefinitely. Build evidence that maps to repeated requirements in actual openings.")
+        items.append("Do not collect certificates as a substitute for proof. A smaller artifact tied to repeated job requirements is usually more informative.")
     if "limited_startup_money" in constraints:
-        items.append("Do not use scarce capital to compensate for uncertainty. Spend only after a test identifies what money would actually unlock.")
-    return items[:3]
+        items.append("Do not use scarce capital to buy confidence. Spend only after a test identifies what money would actually unlock.")
+    if fear in {"wasting time", "choosing the wrong direction", "failing"}:
+        items.append(f"Do not let the fear of {fear} push you into a larger commitment; it is a reason to keep the experiment reversible.")
+    return list(dict.fromkeys(items))[:3]
 
 
 def _consultation_text(c: dict[str, Any]) -> str:
@@ -338,10 +505,23 @@ def _consultation_text(c: dict[str, Any]) -> str:
         c.get("why_primary", ""),
         c.get("first_move", ""),
         " ".join(w.get("action", "") for w in c.get("week_plan", [])),
-        " ".join(a.get("why_below", "") + " " + a.get("reconsider_if", "") for a in c.get("alternatives", [])),
+        " ".join(a.get("upside", "") + " " + a.get("why_below", "") + " " + a.get("reconsider_if", "") for a in c.get("alternatives", [])),
         " ".join(c.get("anti_plan", [])),
     ]
     return " ".join(chunks)
+
+
+def _paragraphs(c: dict[str, Any]) -> list[str]:
+    parts = [
+        c.get("consultant_read", ""),
+        c.get("core_tension", ""),
+        c.get("why_primary", ""),
+        c.get("first_move", ""),
+        *[w.get("action", "") for w in c.get("week_plan", [])],
+        *[a.get("upside", "") + " " + a.get("why_below", "") + " " + a.get("reconsider_if", "") for a in c.get("alternatives", [])],
+        *c.get("anti_plan", []),
+    ]
+    return [x for x in parts if x]
 
 
 def _normalized(text: str) -> str:
@@ -353,6 +533,16 @@ def similarity(a: str, b: str) -> float:
     if not a_n or not b_n:
         return 0.0
     return SequenceMatcher(None, a_n, b_n).ratio()
+
+
+def _max_paragraph_similarity(candidate: dict[str, Any], previous_paragraphs: list[str]) -> float:
+    if not previous_paragraphs:
+        return 0.0
+    return max(
+        similarity(paragraph, old)
+        for paragraph in _paragraphs(candidate)
+        for old in previous_paragraphs
+    )
 
 
 def _compose(answers: dict[str, Any], result: dict[str, Any], purchase_id: int, variant: int) -> dict[str, Any]:
@@ -369,49 +559,45 @@ def _compose(answers: dict[str, Any], result: dict[str, Any], purchase_id: int, 
     fear = FEAR_LABELS.get(answers.get("primary_fear"), _pretty(answers.get("primary_fear")).lower())
     strengths = _top_dimensions(primary)
     watch = _watch_dimensions(primary)
+    focus_name, focus_action = _constraint_focus(answers, primary)
+    experience = _experience_phrase(answers)
 
-    openings = [
-        f"Here is the decision I would make from your current position: test {primary.get('name')} first, but make it earn the right to become a bigger commitment.",
-        f"If this were my decision to structure with your constraints, I would put {primary.get('name')} at the front of the queue and refuse to treat it as a permanent identity yet.",
-        f"The strongest move is not to 'choose a life.' It is to give {primary.get('name')} the first controlled test because it currently fits your situation better than the alternatives.",
-        f"Your profile does not need another list of possibilities. It needs a priority. Right now, that priority is {primary.get('name')}."
-    ]
-    opening = _pick(openings, seed)
-
+    opening = _choice(_OPENERS, seed, 2)
     consultant_read = (
-        f"{opening} You have roughly {hours} hours a week to work with {schedule}, and you want to {goal_phrase} {urgency}. "
-        f"The recommendation is strongest on {strengths[0]['label'] if strengths else 'overall fit'} and {strengths[1]['label'] if len(strengths)>1 else 'feasibility'}, "
-        f"while the weakest area is {watch[0]['label'] if watch else 'still unproven in the real world'}. "
-        f"Your concern about {fear} should shape the size of the experiment, not stop it."
+        f"{opening} test {primary.get('name')} first and make it earn the right to become a bigger commitment. "
+        f"You have roughly {hours} usable hours a week {schedule}; you want to {goal_phrase} {urgency}, {experience}. "
+        f"The case is strongest on {strengths[0]['label'] if strengths else 'overall fit'}"
+        f"{f' and {strengths[1]["label"]}' if len(strengths) > 1 else ''}, while {watch[0]['label'] if watch else 'real-world validation'} is the area I would watch most closely. "
+        f"Your concern about {fear} changes the size of the bet, not the need to test it. The operating boundary is {focus_name}: {focus_action}."
     )
 
+    score_clause = ", ".join(f"{x['label']} ({x['score']})" for x in strengths)
     why_primary = (
-        f"{primary.get('name')} ranks first because the combination matters more than any single score: "
-        + ", ".join(f"{x['label']} ({x['score']})" for x in strengths)
-        + ". "
-        + (primary.get("strengths") or ["The path aligns with the strongest parts of your current profile."])[0]
+        f"{primary.get('name')} ranks first because the combination is stronger than any single trait: {score_clause}. "
+        f"{(primary.get('strengths') or ['The path aligns with the strongest parts of your current profile.'])[0]} "
+        f"I am treating the score as a prioritization tool, not as proof that the path will work."
     )
 
     first_move = _first_move(answers, primary, meta, seed)
     week_plan = _week_plan(answers, primary, meta, seed)
-    alternatives = [_alternative_analysis(primary, alt) for alt in top[1:]]
+    alternatives = [_alternative_analysis(primary, alt, seed, idx) for idx, alt in enumerate(top[1:])]
 
     client_words = (answers.get("twelve_month_change") or "").strip()[:600]
     help_words = (answers.get("help_text") or "").strip()[:500]
 
     confidence_score = result.get("confidence_score")
     if isinstance(confidence_score, (int, float)) and confidence_score >= 80:
-        confidence_note = "There is enough internal consistency in your answers to justify action. That does not make the path certain; it means the next experiment is well founded."
+        confidence_note = "Your answers are internally consistent enough to justify action. That is confidence in the next experiment, not certainty about the final outcome."
     elif isinstance(confidence_score, (int, float)) and confidence_score >= 60:
-        confidence_note = "The direction is usable, but not settled. Your first month matters more than the score because real-world response should either strengthen or weaken the recommendation."
+        confidence_note = "The direction is usable but not settled. The first month should be treated as evidence collection, because real-world response should be allowed to strengthen or weaken the recommendation."
     else:
-        confidence_note = "Your answers still contain meaningful ambiguity. Treat this report as a structured hypothesis and use the first month primarily to reduce uncertainty."
+        confidence_note = "The profile still contains meaningful ambiguity. The report is therefore a structured hypothesis, and the first month should primarily reduce uncertainty rather than increase commitment."
 
     decision_brief = {
         "primary_path": primary.get("name"),
-        "why_now": f"It best balances your current fit, constraints, and need to make progress {urgency}.",
+        "why_now": f"It currently gives the best balance of fit, constraints, and progress toward your goals {urgency}.",
         "strongest_advantage": strengths[0]["label"] if strengths else "overall alignment",
-        "main_constraint": (primary.get("constraints") or ["No major immediate constraint was detected."])[0],
+        "main_constraint": (primary.get("constraints") or [f"{focus_name}: {focus_action}."])[0],
         "first_move": first_move,
         "thirty_day_target": week_plan[-1]["action"],
     }
@@ -419,12 +605,12 @@ def _compose(answers: dict[str, Any], result: dict[str, Any], purchase_id: int, 
     return {
         "version": CONSULTATION_VERSION,
         "consultant_read": consultant_read,
-        "core_tension": _tension_read(answers, primary),
+        "core_tension": _tension_read(answers, primary, seed),
         "why_primary": why_primary,
         "first_move": first_move,
         "week_plan": week_plan,
         "alternatives": alternatives,
-        "anti_plan": _anti_plan(answers, primary),
+        "anti_plan": _anti_plan(answers, primary, seed),
         "fit_highlights": strengths,
         "fit_watchouts": watch,
         "decision_brief": decision_brief,
@@ -453,28 +639,44 @@ def compose_unique_consultation(
     previous_consultation_texts: list[str] | None = None,
 ) -> dict[str, Any]:
     if not result.get("top_paths"):
-        return {"version": CONSULTATION_VERSION, "consultant_read": "The current answers do not create enough signal for a responsible recommendation."}
+        return {
+            "version": CONSULTATION_VERSION,
+            "consultant_read": "The current answers do not create enough signal for a responsible recommendation.",
+        }
 
     previous = [x for x in (previous_consultation_texts or []) if x]
+    previous_paragraphs = [p for text in previous for p in re.split(r"(?<=[.!?])\s+(?=[A-Z])", text) if len(p) >= 60]
     best: dict[str, Any] | None = None
-    best_similarity = 1.0
+    best_overall = 1.0
+    best_paragraph = 1.0
 
-    for variant in range(16):
+    for variant in range(MAX_VARIANTS):
         candidate = _compose(answers, result, purchase_id, variant)
         text = _consultation_text(candidate)
-        max_sim = max((similarity(text, existing) for existing in previous), default=0.0)
-        if max_sim < best_similarity:
-            best, best_similarity = candidate, max_sim
-        if max_sim < 0.72:
+        overall = max((similarity(text, existing) for existing in previous), default=0.0)
+        paragraph = _max_paragraph_similarity(candidate, previous_paragraphs)
+
+        if (overall, paragraph) < (best_overall, best_paragraph):
+            best = candidate
+            best_overall = overall
+            best_paragraph = paragraph
+
+        if overall < MAX_SIMILARITY and paragraph < 0.92:
+            best = candidate
+            best_overall = overall
+            best_paragraph = paragraph
             break
 
     assert best is not None
+    body = _consultation_text(best)
     best["originality"] = {
-        "max_similarity_to_recent_reports": round(best_similarity, 3),
+        "max_similarity_to_recent_reports": round(best_overall, 3),
+        "max_paragraph_similarity": round(best_paragraph, 3),
         "checked_against": len(previous),
-        "method": "case-specific synthesis + similarity guard",
+        "variants_considered": variant + 1,
+        "method": "case-specific synthesis + whole-report and paragraph similarity guards",
     }
-    best["fingerprint"] = hashlib.sha256(_consultation_text(best).encode("utf-8")).hexdigest()
+    best["fingerprint"] = hashlib.sha256(body.encode("utf-8")).hexdigest()
     return best
 
 
