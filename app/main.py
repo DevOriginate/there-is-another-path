@@ -19,7 +19,7 @@ from .engine import evaluate, load_paths
 from . import db
 from .payments import create_checkout, verify_success, handle_webhook
 from .reporting import build_report
-from .consultation import compose_unique_consultation
+from .consultation import compose_unique_consultation, consultation_fragment_hashes
 from .security import validate_data_encryption_key, create_private_session, read_private_session
 from .config import (
     PRODUCT_PRICE_USD,
@@ -397,6 +397,7 @@ def submit_assessment(request: Request, assessment: AssessmentInput):
                     answers_payload,
                     result_payload,
                     consultation_fingerprint=consultation["fingerprint"],
+                    consultation_fragment_fingerprints=consultation_fragment_hashes(consultation),
                 )
                 saved_unique = True
                 break
