@@ -5,11 +5,11 @@ from .config import *
 def create_checkout(acquisition: dict, email: str | None = None) -> dict:
     amount = PRODUCT_PRICE_USD * 100
     if DEMO_MODE or not STRIPE_SECRET_KEY:
-        purchase = db.create_purchase(amount, acquisition, email, status="paid")
+        purchase = db.create_purchase(amount, acquisition, None, status="paid")
         return {"mode":"demo", "url": f"{PUBLIC_BASE_URL}/start?token={purchase['access_token']}", "access_token": purchase['access_token']}
     import stripe
     stripe.api_key = STRIPE_SECRET_KEY
-    purchase = db.create_purchase(amount, acquisition, email, status="pending")
+    purchase = db.create_purchase(amount, acquisition, None, status="pending")
     kwargs = dict(
         mode="payment",
         success_url=f"{PUBLIC_BASE_URL}/checkout/success?session_id={{CHECKOUT_SESSION_ID}}",
@@ -39,16 +39,10 @@ def verify_success(session_id: str) -> dict | None:
     if session.payment_status != 'paid':
         return None
 
-    email = None
-    try:
-        email = session.customer_details.email
-    except Exception:
-        pass
-
     purchase = db.get_purchase_by_session(session_id)
     if purchase:
         if purchase['status'] != 'paid':
-            db.mark_paid_by_session(session_id, email)
+            db.mark_paid_by_session(session_id)
         return db.get_purchase_by_session(session_id)
 
     metadata = session.metadata or {}
@@ -61,7 +55,7 @@ def verify_success(session_id: str) -> dict | None:
         access_token=access_token,
         amount_cents=session.amount_total or PRODUCT_PRICE_USD * 100,
         currency=session.currency or "usd",
-        email=email,
+        email=None,
     )
 
 def handle_webhook(payload: bytes, signature: str):
@@ -73,7 +67,6 @@ def handle_webhook(payload: bytes, signature: str):
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
         if session.get('payment_status') == 'paid':
-            email = (session.get('customer_details') or {}).get('email')
             metadata = session.get('metadata') or {}
             access_token = metadata.get('access_token')
             if access_token:
@@ -82,8 +75,8 @@ def handle_webhook(payload: bytes, signature: str):
                     access_token=access_token,
                     amount_cents=session.get('amount_total') or PRODUCT_PRICE_USD * 100,
                     currency=session.get('currency') or 'usd',
-                    email=email,
+                    email=None,
                 )
             else:
-                db.mark_paid_by_session(session['id'], email)
+                db.mark_paid_by_session(session['id'])
     return event['type']
