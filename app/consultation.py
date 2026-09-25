@@ -637,6 +637,7 @@ def compose_unique_consultation(
     result: dict[str, Any],
     purchase_id: int,
     previous_consultation_texts: list[str] | None = None,
+    variant_offset: int = 0,
 ) -> dict[str, Any]:
     if not result.get("top_paths"):
         return {
@@ -650,7 +651,8 @@ def compose_unique_consultation(
     best_overall = 1.0
     best_paragraph = 1.0
 
-    for variant in range(MAX_VARIANTS):
+    for local_variant in range(MAX_VARIANTS):
+        variant = variant_offset + local_variant
         candidate = _compose(answers, result, purchase_id, variant)
         text = _consultation_text(candidate)
         overall = max((similarity(text, existing) for existing in previous), default=0.0)
@@ -673,7 +675,7 @@ def compose_unique_consultation(
         "max_similarity_to_recent_reports": round(best_overall, 3),
         "max_paragraph_similarity": round(best_paragraph, 3),
         "checked_against": len(previous),
-        "variants_considered": variant + 1,
+        "variants_considered": local_variant + 1,
         "method": "case-specific synthesis + whole-report and paragraph similarity guards",
     }
     best["fingerprint"] = hashlib.sha256(body.encode("utf-8")).hexdigest()
