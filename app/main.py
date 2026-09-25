@@ -212,7 +212,7 @@ def start(request: Request, token: str | None = None):
         if not purchase or purchase["status"] != "paid":
             return RedirectResponse("/", status_code=303)
         response = RedirectResponse("/start", status_code=303)
-        _set_access_cookie(response, purchase["id"])
+        _set_access_cookie(response, request, purchase["id"])
         return response
     return page("assessment.html")
 
@@ -223,7 +223,7 @@ def report_page():
 
 
 @app.get("/report/{token}", include_in_schema=False)
-def legacy_report_page(token: str):
+def legacy_report_page(request: Request, token: str):
     purchase = db.get_purchase_by_token(token)
     if not purchase or purchase["status"] != "paid":
         return RedirectResponse("/", status_code=303)
@@ -330,7 +330,7 @@ def checkout_session(payload: CheckoutRequest):
 
 
 @app.get("/checkout/success", include_in_schema=False)
-def checkout_success(session_id: str):
+def checkout_success(request: Request, session_id: str):
     purchase = verify_success(session_id)
     if not purchase:
         return HTMLResponse(
@@ -343,7 +343,7 @@ def checkout_success(session_id: str):
 
 
 @app.get("/checkout/demo-success", include_in_schema=False)
-def checkout_demo_success(token: str):
+def checkout_demo_success(request: Request, token: str):
     if not DEMO_MODE:
         raise HTTPException(404, "Not found")
     purchase = db.get_purchase_by_token(token)
