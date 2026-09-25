@@ -25,6 +25,8 @@ jobs:
       - run: pip install -r requirements.txt
       - name: Compile Python
         run: python -m compileall -q app
+      - name: Check landing JavaScript syntax
+        run: node --check app/static/app.js
       - name: Security smoke test
         shell: bash
         run: |
@@ -62,6 +64,12 @@ jobs:
               access = client.get("/api/v1/access/me")
               assert access.status_code == 200
               assert access.json()["valid"] is True
+              assert access.json()["completed"] is True
+              assert access.json()["report_url"] == "/report"
+
+              landing = client.get("/")
+              assert landing.status_code == 200
+              assert "app.js?v=returning-access-v1" in landing.text
 
               report = client.get("/api/v1/reports/me")
               assert report.status_code == 200
