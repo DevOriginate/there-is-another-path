@@ -374,6 +374,8 @@ async def stripe_webhook(request: Request, stripe_signature: str | None = Header
 @app.post("/api/v1/assessments/submit")
 def submit_assessment(request: Request, assessment: AssessmentInput):
     purchase = _paid_purchase_from_request(request)
+    if db.get_assessment_for_purchase(purchase["id"]):
+        raise HTTPException(409, "This purchase already has a completed consultation")
     try:
         result = evaluate(assessment)
         result_payload = result.model_dump()
