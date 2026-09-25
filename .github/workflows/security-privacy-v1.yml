@@ -25,8 +25,13 @@ jobs:
       - run: pip install -r requirements.txt
       - name: Compile Python
         run: python -m compileall -q app
-      - name: Check landing JavaScript syntax
-        run: node --check app/static/app.js
+      - name: Check browser JavaScript syntax
+        run: |
+          node --check app/static/app.js
+          node --check app/static/assessment.js
+          node --check app/static/report.js
+          node --check app/static/recover.js
+          node --check app/static/admin.js
       - name: Security smoke test
         shell: bash
         run: |
@@ -35,14 +40,20 @@ jobs:
           import os
           from fastapi.testclient import TestClient
           from app import db
-          from app.security import encrypt_json, decrypt_json, create_private_session, read_private_session
+          from app.security import encrypt_json, decrypt_json, create_private_session, read_private_session, merge_private_session
 
           encrypted = encrypt_json({"hello": "private"})
           assert encrypted.startswith("fernet:")
           assert decrypt_json(encrypted) == {"hello": "private"}
 
           cookie = create_private_session(42)
-          assert read_private_session(cookie, 60) == 42
+          vault = read_private_session(cookie, 60)
+          assert vault["active_purchase_id"] == 42
+          assert vault["purchase_ids"] == [42]
+          merged = merge_private_session(cookie, 43, 60)
+          merged_vault = read_private_session(merged, 60)
+          assert merged_vault["purchase_ids"] == [42, 43]
+          assert merged_vault["active_purchase_id"] == 43
 
           db.init_db()
           purchase = db.create_purchase(1900, {"utm_source": "ci"}, status="paid")
@@ -69,7 +80,7 @@ jobs:
 
               landing = client.get("/")
               assert landing.status_code == 200
-              assert "app.js?v=returning-access-v1" in landing.text
+              assert "app.js?v=prelaunch-v1" in landing.text
 
               report = client.get("/api/v1/reports/me")
               assert report.status_code == 200

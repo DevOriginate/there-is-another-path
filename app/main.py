@@ -20,7 +20,11 @@ from . import db
 from .payments import create_checkout, verify_success, handle_webhook
 from .reporting import build_report
 from .consultation import CONSULTATION_VERSION, compose_unique_consultation, consultation_fragment_hashes
-from .security import validate_data_encryption_key, create_private_session, read_private_session
+from .security import validate_data_encryption_key, recovery_code, recovery_reference
+from .access import active_purchase, purchase_access, set_access_cookie, remove_access_cookie_entry
+from .access_routes import router as access_router
+from .draft_routes import router as draft_router
+from .recovery_routes import router as recovery_router
 from .config import (
     PRODUCT_PRICE_USD,
     DEMO_MODE,
@@ -40,16 +44,8 @@ STATIC = APP_DIR / "static"
 SESSION_MAX_AGE = ASSESSMENT_RETENTION_DAYS * 24 * 60 * 60
 
 
-def _set_access_cookie(response, purchase_id: int) -> None:
-    response.set_cookie(
-        key=SESSION_COOKIE_NAME,
-        value=create_private_session(purchase_id),
-        max_age=SESSION_MAX_AGE,
-        httponly=True,
-        secure=SESSION_COOKIE_SECURE,
-        samesite="strict",
-        path="/",
-    )
+def _set_access_cookie(response, request: Request, purchase_id: int) -> None:
+    set_access_cookie(response, request, purchase_id)
 
 
 def _clear_access_cookie(response) -> None:
@@ -62,18 +58,10 @@ def _clear_access_cookie(response) -> None:
     )
 
 
+# Prelaunch entitlement resolver. This later definition intentionally supersedes
+# the legacy single-purchase resolver above while old cookies remain compatible.
 def _paid_purchase_from_request(request: Request) -> dict:
-    cookie_value = request.cookies.get(SESSION_COOKIE_NAME)
-    if not cookie_value:
-        raise HTTPException(403, "Valid paid access is required")
-    try:
-        purchase_id = read_private_session(cookie_value, SESSION_MAX_AGE)
-    except ValueError as exc:
-        raise HTTPException(403, "Valid paid access is required") from exc
-    purchase = db.get_purchase_by_id(purchase_id)
-    if not purchase or purchase["status"] != "paid":
-        raise HTTPException(403, "Valid paid access is required")
-    return purchase
+    return active_purchase(request)
 
 
 async def _privacy_maintenance_loop():
@@ -102,7 +90,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="There Is Another Path — The Path Finder",
-    version="1.4.1-consultation-v2-2",
+    version="1.5.0-prelaunch-ready",
     description="Path Finder commercial MVP + explainable recommendation engine.",
     lifespan=lifespan,
     docs_url="/docs" if EXPOSE_API_DOCS else None,
@@ -110,11 +98,16 @@ app = FastAPI(
     openapi_url="/openapi.json" if EXPOSE_API_DOCS else None,
 )
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
+app.include_router(access_router)
+app.include_router(draft_router)
+app.include_router(recovery_router)
 
 _rate_hits = defaultdict(deque)
 _RATE_RULES = {
     "/api/v1/checkout/session": (10, 60),
     "/api/v1/assessments/score": (30, 60),
+    "/api/v1/assessments/draft": (60, 60),
+    "/api/v1/access/restore": (5, 60),
 }
 
 
@@ -125,6 +118,8 @@ def _rate_rule(path: str):
         return (20, 60)
     if path == "/api/v1/privacy/delete":
         return (5, 60)
+    if path.startswith("/api/v1/access/switch/"):
+        return (20, 60)
     return _RATE_RULES.get(path)
 
 
@@ -184,6 +179,7 @@ async def security_headers(request: Request, call_next):
         or request.url.path.startswith("/api/v1/access")
         or request.url.path.startswith("/api/v1/reports")
         or request.url.path.startswith("/api/v1/privacy")
+        or request.url.path.startswith("/api/v1/assessments/draft")
     )
     if private_path:
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
@@ -206,10 +202,10 @@ def start(request: Request, token: str | None = None):
     # One-release migration path for old paid links. New links never expose the token.
     if token:
         purchase = db.get_purchase_by_token(token)
-        if not purchase or purchase["status"] != "paid":
+        if not purchase or not purchase_access(purchase)["valid"]:
             return RedirectResponse("/", status_code=303)
         response = RedirectResponse("/start", status_code=303)
-        _set_access_cookie(response, purchase["id"])
+        _set_access_cookie(response, request, purchase["id"])
         return response
     return page("assessment.html")
 
@@ -220,13 +216,18 @@ def report_page():
 
 
 @app.get("/report/{token}", include_in_schema=False)
-def legacy_report_page(token: str):
+def legacy_report_page(request: Request, token: str):
     purchase = db.get_purchase_by_token(token)
-    if not purchase or purchase["status"] != "paid":
+    if not purchase or not purchase_access(purchase)["valid"]:
         return RedirectResponse("/", status_code=303)
     response = RedirectResponse("/report", status_code=303)
-    _set_access_cookie(response, purchase["id"])
+    _set_access_cookie(response, request, purchase["id"])
     return response
+
+
+@app.get("/recover", include_in_schema=False)
+def recover_page():
+    return page("recover.html")
 
 
 @app.get("/privacy", include_in_schema=False)
@@ -261,11 +262,12 @@ def health():
     data = load_paths()
     return {
         "status": "ok",
-        "app_version": "1.4.1-consultation-v2-2",
+        "app_version": "1.5.0-prelaunch-ready",
         "engine_version": "1.0.0",
         "consultation_version": CONSULTATION_VERSION,
         "market_version": data["market_version"],
         "path_count": len(data["paths"]),
+        "access_days": ASSESSMENT_RETENTION_DAYS,
         "demo_mode": DEMO_MODE,
     }
 
@@ -279,6 +281,7 @@ def public_config():
         "support_email": SUPPORT_EMAIL,
         "refund_days": REFUND_DAYS,
         "billing_label": BILLING_LABEL,
+        "access_days": ASSESSMENT_RETENTION_DAYS,
     }
 
 
@@ -327,27 +330,27 @@ def checkout_session(payload: CheckoutRequest):
 
 
 @app.get("/checkout/success", include_in_schema=False)
-def checkout_success(session_id: str):
+def checkout_success(request: Request, session_id: str):
     purchase = verify_success(session_id)
     if not purchase:
         return HTMLResponse(
             "<h1>Payment not verified</h1><p>Please contact support if you were charged.</p>",
             status_code=402,
         )
-    response = RedirectResponse(url="/start", status_code=303)
-    _set_access_cookie(response, purchase["id"])
+    response = RedirectResponse(url="/start?welcome=1", status_code=303)
+    _set_access_cookie(response, request, purchase["id"])
     return response
 
 
 @app.get("/checkout/demo-success", include_in_schema=False)
-def checkout_demo_success(token: str):
+def checkout_demo_success(request: Request, token: str):
     if not DEMO_MODE:
         raise HTTPException(404, "Not found")
     purchase = db.get_purchase_by_token(token)
     if not purchase or purchase["status"] != "paid":
         raise HTTPException(403, "Valid paid access is required")
     response = RedirectResponse(url="/start", status_code=303)
-    _set_access_cookie(response, purchase["id"])
+    _set_access_cookie(response, request, purchase["id"])
     return response
 
 
@@ -362,20 +365,11 @@ async def stripe_webhook(request: Request, stripe_signature: str | None = Header
     return {"received": True, "type": event_type}
 
 
-@app.get("/api/v1/access/me")
-def access_status(request: Request):
-    purchase = _paid_purchase_from_request(request)
-    assessment = db.get_assessment_for_purchase(purchase["id"])
-    return {
-        "valid": True,
-        "completed": bool(assessment),
-        "report_url": "/report" if assessment else None,
-    }
-
-
 @app.post("/api/v1/assessments/submit")
 def submit_assessment(request: Request, assessment: AssessmentInput):
     purchase = _paid_purchase_from_request(request)
+    if db.get_assessment_for_purchase(purchase["id"]):
+        raise HTTPException(409, "This purchase already has a completed consultation")
     try:
         result = evaluate(assessment)
         result_payload = result.model_dump()
@@ -445,13 +439,22 @@ def feedback(request: Request, day: int, body: FeedbackPayload):
     return {"ok": True}
 
 
-@app.post("/api/v1/privacy/delete")
-def delete_private_data(request: Request):
-    purchase = _paid_purchase_from_request(request)
-    db.delete_personal_data(purchase["id"])
-    response = JSONResponse({"ok": True})
-    _clear_access_cookie(response)
-    return response
+@app.get("/api/v1/admin/access-backup/{purchase_id}")
+def admin_access_backup(purchase_id: int, x_admin_token: str | None = Header(default=None)):
+    supplied = x_admin_token or ""
+    expected = ADMIN_TOKEN or ""
+    if not expected or not secrets.compare_digest(supplied, expected):
+        raise HTTPException(403, "Invalid admin token")
+    purchase = db.get_purchase_by_id(purchase_id)
+    access = purchase_access(purchase)
+    if not purchase or not access["valid"]:
+        raise HTTPException(410, "Purchase is not inside an active access window")
+    return {
+        "purchase_id": purchase_id,
+        "reference": recovery_reference(purchase_id),
+        "key": recovery_code(purchase_id),
+        "expires_at": access.get("expires_at"),
+    }
 
 
 @app.get("/api/v1/admin/summary")
