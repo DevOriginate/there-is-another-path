@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 12
     env:
       HEALTH_URL: https://there-is-another-path.onrender.com/health
-      EXPECTED_APP_VERSION: 1.5.1-legal-ready
+      EXPECTED_APP_VERSION: 1.5.2-launch-ux
       EXPECTED_CONSULTATION_VERSION: 2.2.0
     steps:
       - name: Wait for Render and verify production health

@@ -91,7 +91,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="There Is Another Path — The Path Finder",
-    version="1.5.1-legal-ready",
+    version="1.5.2-launch-ux",
     description="Path Finder commercial MVP + explainable recommendation engine.",
     lifespan=lifespan,
     docs_url="/docs" if EXPOSE_API_DOCS else None,
@@ -264,7 +264,7 @@ def health():
     data = load_paths()
     return {
         "status": "ok",
-        "app_version": "1.5.1-legal-ready",
+        "app_version": "1.5.2-launch-ux",
         "engine_version": "1.0.0",
         "consultation_version": CONSULTATION_VERSION,
         "market_version": data["market_version"],
