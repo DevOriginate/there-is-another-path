@@ -33,6 +33,7 @@ from .config import (
     SUPPORT_EMAIL,
     REFUND_DAYS,
     BILLING_LABEL,
+    SELLER_LEGAL_NAME,
     SESSION_COOKIE_NAME,
     SESSION_COOKIE_SECURE,
     ASSESSMENT_RETENTION_DAYS,
@@ -90,7 +91,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="There Is Another Path — The Path Finder",
-    version="1.5.0-prelaunch-ready",
+    version="1.5.1-legal-ready",
     description="Path Finder commercial MVP + explainable recommendation engine.",
     lifespan=lifespan,
     docs_url="/docs" if EXPOSE_API_DOCS else None,
@@ -263,7 +264,7 @@ def health():
     data = load_paths()
     return {
         "status": "ok",
-        "app_version": "1.5.0-prelaunch-ready",
+        "app_version": "1.5.1-legal-ready",
         "engine_version": "1.0.0",
         "consultation_version": CONSULTATION_VERSION,
         "market_version": data["market_version"],
@@ -282,6 +283,7 @@ def public_config():
         "support_email": SUPPORT_EMAIL,
         "refund_days": REFUND_DAYS,
         "billing_label": BILLING_LABEL,
+        "seller_legal_name": SELLER_LEGAL_NAME,
         "access_days": ASSESSMENT_RETENTION_DAYS,
     }
 

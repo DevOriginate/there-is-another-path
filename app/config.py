@@ -21,7 +21,7 @@ DEMO_MODE = os.getenv("DEMO_MODE", "false").lower() in {"1", "true", "yes", "on"
 META_PIXEL_ID = os.getenv("META_PIXEL_ID", "").strip()
 ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "change-me-before-production")
 SUPPORT_EMAIL = os.getenv("SUPPORT_EMAIL", "thereisanotherp4th@gmail.com")
-SELLER_LEGAL_NAME = os.getenv("SELLER_LEGAL_NAME", "").strip()
+SELLER_LEGAL_NAME = (os.getenv("SELLER_LEGAL_NAME") or "Riquelme Cordeiro de Jesus Oliveira").strip()
 BILLING_LABEL = os.getenv("BILLING_LABEL", "RIQUELME").strip()
 REFUND_DAYS = int(os.getenv("REFUND_DAYS", "7"))
 

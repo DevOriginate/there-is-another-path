@@ -55,6 +55,7 @@ Open:
 - Audience: United States
 - Price: **US$19 one-time**
 - Support: **thereisanotherp4th@gmail.com**
+- Seller: **Riquelme Cordeiro de Jesus Oliveira**  
 - Seller country: **Brazil**
 - Refund policy: **7-day request window**
 - Local persistence: SQLite
