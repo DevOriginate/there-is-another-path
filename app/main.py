@@ -111,6 +111,8 @@ app = FastAPI(
     openapi_url="/openapi.json" if EXPOSE_API_DOCS else None,
 )
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
+app.include_router(access_router)
+app.include_router(draft_router)
 
 _rate_hits = defaultdict(deque)
 _RATE_RULES = {
