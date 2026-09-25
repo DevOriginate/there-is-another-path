@@ -33,6 +33,7 @@ from .config import (
     SUPPORT_EMAIL,
     REFUND_DAYS,
     BILLING_LABEL,
+    SELLER_LEGAL_NAME,
     SESSION_COOKIE_NAME,
     SESSION_COOKIE_SECURE,
     ASSESSMENT_RETENTION_DAYS,
@@ -282,6 +283,7 @@ def public_config():
         "support_email": SUPPORT_EMAIL,
         "refund_days": REFUND_DAYS,
         "billing_label": BILLING_LABEL,
+        "seller_legal_name": SELLER_LEGAL_NAME,
         "access_days": ASSESSMENT_RETENTION_DAYS,
     }
 
