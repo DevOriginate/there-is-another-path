@@ -378,14 +378,34 @@ def submit_assessment(request: Request, assessment: AssessmentInput):
     try:
         result = evaluate(assessment)
         result_payload = result.model_dump()
-        previous = db.get_recent_consultation_texts(limit=200)
-        result_payload["_consultation"] = compose_unique_consultation(
-            assessment.model_dump(),
-            result_payload,
-            purchase["id"],
-            previous,
-        )
-        db.save_assessment(purchase["id"], assessment.model_dump(), result_payload)
+        previous = db.get_recent_consultation_texts(limit=500)
+        answers_payload = assessment.model_dump()
+
+        saved_unique = False
+        for attempt in range(4):
+            consultation = compose_unique_consultation(
+                answers_payload,
+                result_payload,
+                purchase["id"],
+                previous,
+                variant_offset=attempt * 128,
+            )
+            result_payload["_consultation"] = consultation
+            try:
+                db.save_assessment(
+                    purchase["id"],
+                    answers_payload,
+                    result_payload,
+                    consultation_fingerprint=consultation["fingerprint"],
+                )
+                saved_unique = True
+                break
+            except db.DuplicateConsultationFingerprint:
+                continue
+
+        if not saved_unique:
+            raise RuntimeError("Could not produce a unique consultation")
+
         return {"ok": True, "report_url": "/report"}
     except Exception as exc:
         raise HTTPException(500, f"Engine error: {exc}") from exc
