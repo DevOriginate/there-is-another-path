@@ -43,16 +43,8 @@ STATIC = APP_DIR / "static"
 SESSION_MAX_AGE = ASSESSMENT_RETENTION_DAYS * 24 * 60 * 60
 
 
-def _set_access_cookie(response, purchase_id: int) -> None:
-    response.set_cookie(
-        key=SESSION_COOKIE_NAME,
-        value=create_private_session(purchase_id),
-        max_age=SESSION_MAX_AGE,
-        httponly=True,
-        secure=SESSION_COOKIE_SECURE,
-        samesite="strict",
-        path="/",
-    )
+def _set_access_cookie(response, request: Request, purchase_id: int) -> None:
+    set_access_cookie(response, request, purchase_id)
 
 
 def _clear_access_cookie(response) -> None:
