@@ -27,6 +27,17 @@ def access_status(request: Request):
     active_id = int(vault["active_purchase_id"])
     active_purchase = by_id.get(active_id)
     active_access = purchase_access(active_purchase)
+
+    if not active_access["valid"]:
+        fallback = next(
+            (purchase for purchase in purchases if purchase_access(purchase)["valid"]),
+            None,
+        )
+        if fallback:
+            active_purchase = fallback
+            active_id = fallback["id"]
+            active_access = purchase_access(fallback)
+
     active_assessment = (
         db.get_assessment_for_purchase(active_id)
         if active_purchase and active_access["valid"]
