@@ -238,8 +238,56 @@ function showEndedAccess(access,c){
   }
 }
 
+function showCheckoutReturnNotice(){
+  const params=new URLSearchParams(location.search);
+  if(params.get('checkout')!=='cancelled')return;
+
+  const notice=document.createElement('section');
+  notice.className='checkout-return-notice';
+  notice.setAttribute('role','status');
+  notice.setAttribute('aria-live','polite');
+
+  const inner=document.createElement('div');
+  inner.className='wrap checkout-return-inner';
+
+  const copy=document.createElement('div');
+  copy.innerHTML='<div class="eyebrow">Checkout canceled</div><strong>No payment was completed.</strong><p>You can continue browsing or return to the offer whenever you are ready.</p>';
+
+  const actions=document.createElement('div');
+  actions.className='checkout-return-actions';
+
+  const retry=document.createElement('button');
+  retry.type='button';
+  retry.className='btn secondary';
+  retry.textContent='Return to the offer';
+  retry.onclick=()=>{
+    document.querySelector('#offer')?.scrollIntoView({behavior:'smooth',block:'start'});
+    window.setTimeout(()=>document.querySelector('#offer .checkout-btn')?.focus(),350);
+  };
+
+  const dismiss=document.createElement('button');
+  dismiss.type='button';
+  dismiss.className='checkout-notice-dismiss';
+  dismiss.setAttribute('aria-label','Dismiss checkout canceled message');
+  dismiss.textContent='×';
+  dismiss.onclick=()=>notice.remove();
+
+  actions.append(retry,dismiss);
+  inner.append(copy,actions);
+  notice.appendChild(inner);
+
+  const nav=document.querySelector('body[data-page="landing"] > .wrap:first-child');
+  if(nav)nav.insertAdjacentElement('afterend',notice);
+  else document.body.prepend(notice);
+
+  params.delete('checkout');
+  const query=params.toString();
+  history.replaceState(null,'',location.pathname+(query?'?'+query:'')+location.hash);
+}
+
 async function initLanding(){
   const c=await initCommon();
+  showCheckoutReturnNotice();
   $$('.price-value').forEach(x=>x.textContent='$'+c.product_price_usd);
   document.querySelectorAll('.access-days').forEach(x=>x.textContent=String(c.access_days));
 
