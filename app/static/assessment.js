@@ -1,5 +1,5 @@
 const sel=s=>document.querySelector(s);
-let qs=[],i=0,a={};
+let qs=[],i=0,a={},submitting=false;
 const pretty=s=>String(s).replaceAll('_',' ').replace(/\b\w/g,c=>c.toUpperCase());
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 
@@ -79,8 +79,10 @@ function capture(validate=true){
 }
 
 async function next(){
+ if(submitting)return;
  if(!capture(true))return;
  if(i<qs.length-1){const nextIndex=i+1;await saveDraft(nextIndex);i=nextIndex;render();return}
+ submitting=true;
  await saveDraft(i);
  sel('#question').innerHTML='<div class="loading"><h2>Building your path report…</h2></div>';
  const r=await fetch('/api/v1/assessments/submit',{
@@ -92,8 +94,10 @@ async function next(){
  const j=await r.json().catch(()=>({}));
  if(r.status===409){location.href='/report';return}
  if(!r.ok){
+  submitting=false;
   const detail=Array.isArray(j.detail)?'Please remove sensitive personal identifiers from your written answers and try again.':(j.detail||'Try again');
-  sel('#question').innerHTML='<div class="card"><h2>Could not build report</h2><p class="error">'+String(detail)+'</p></div>';
+  sel('#question').innerHTML='<div class="card"><h2>Could not build report</h2><p class="error">'+String(detail)+'</p><button class="btn" id="reload-assessment">Return to assessment</button></div>';
+  sel('#reload-assessment')?.addEventListener('click',()=>location.reload());
   return;
  }
  location.href=j.report_url;
