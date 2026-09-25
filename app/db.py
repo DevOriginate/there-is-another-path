@@ -95,9 +95,10 @@ def mark_paid_by_session(session_id: str, email: str | None = None):
             {"paid": now_iso(), "sid": session_id},
         )
 
-def recover_paid_purchase(session_id: str, access_token: str, amount_cents: int, currency: str = "usd", email: str | None = None) -> dict | None:
+def recover_paid_purchase(session_id: str, access_token: str | None, amount_cents: int, currency: str = "usd", email: str | None = None) -> dict | None:
     paid = now_iso()
     created = paid
+    access_token = access_token or secrets.token_urlsafe(24)
     params = {
         "sid": session_id,
         "token": access_token,
