@@ -1839,3 +1839,21 @@ main > .section:nth-of-type(4) .card:hover{
     background:#fff;
   }
 }
+
+
+/* PRIVACY V1 */
+.privacy-hint{
+  margin:10px 0 0;
+  color:var(--faint);
+  font-family:var(--mono);
+  font-size:.68rem;
+  line-height:1.55;
+}
+
+.admin-feedback-card{
+  margin-top:18px;
+}
+
+#login .textarea{
+  min-height:0;
+}
