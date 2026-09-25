@@ -414,55 +414,90 @@ def _decision_rules(answers: dict[str, Any], primary: dict[str, Any], seed: int)
     name = primary.get("name", "this path")
     numbers = _case_numbers(answers, seed)
     fear = FEAR_LABELS.get(answers.get("primary_fear"), "choosing wrong")
+    market_n = max(5, numbers["outreach"] // 2)
 
     if family == "employment":
-        return {
-            "continue": (
-                f"Continue if your proof-of-work is improving and targeted contact with the market produces useful signal: replies, referrals, screening calls, interviews, or specific feedback about {name}."
-            ),
-            "adjust": (
-                f"Adjust the target if the same missing requirement appears repeatedly across employers or if {max(5, numbers['outreach']//2)} targeted applications produce interest in an adjacent role but not the exact role you chose."
-            ),
-            "switch": (
-                f"Re-rank the path if you can show relevant evidence, have corrected repeated gaps, and still receive no meaningful market signal after a disciplined test. Do not switch merely because the first rejection triggers your fear of {fear}."
-            ),
-        }
-    if family == "freelance":
-        return {
-            "continue": (
-                f"Continue if prospects understand the offer, conversations move toward scope or price, or even one buyer is willing to test a small paid version of {name}."
-            ),
-            "adjust": (
-                f"Adjust the buyer, problem, or deliverable if people respond but do not see enough value to pay. Use the objections from roughly {numbers['outreach']} market contacts before rewriting everything."
-            ),
-            "switch": (
-                f"Re-rank the path if a clear offer, credible sample, and repeated outreach create neither conversations nor paid interest. Protect yourself from {fear} by changing one variable at a time before abandoning the entire direction."
-            ),
-        }
-    if family == "service_business":
-        return {
-            "continue": (
-                f"Continue if real prospects acknowledge the problem, accept calls or pilots, and the smallest version of {name} can be delivered without violating your time, capital, or risk boundaries."
-            ),
-            "adjust": (
-                f"Adjust the customer/problem pairing when prospects agree the problem exists but resist the offer, timing, or price. Use the patterns from about {numbers['outreach']} contacts rather than one loud opinion."
-            ),
-            "switch": (
-                f"Re-rank the path if the problem repeatedly fails to earn attention or if delivering the pilot conflicts with the constraints the assessment identified. The fear of {fear} is not evidence; customer behavior is."
-            ),
-        }
-    return {
-        "continue": (
-            f"Continue if the intended audience repeatedly asks about the problem, uses the asset or session, and shows willingness to spend time or money for a deeper version of {name}."
-        ),
-        "adjust": (
-            f"Adjust the format when the problem is real but the delivery model is wrong. Test whether the same expertise works better as consulting, training, a service, or a smaller digital asset."
-        ),
-        "switch": (
-            f"Re-rank the path if the problem does not repeat across the audience or your experience does not create a meaningful shortcut for them. Do not let the fear of {fear} force you to defend an idea the audience is not validating."
-        ),
-    }
+        continue_options = [
+            f"Keep {name} in first place when your proof-of-work is improving and targeted market contact produces useful signal: replies, referrals, screening calls, interviews, or specific role feedback.",
+            f"Increase commitment to {name} only after your evidence becomes easier to show and at least some employers or practitioners respond with concrete next-step interest.",
+            f"Continue when the market begins giving you specific signals rather than generic encouragement: a referral, interview, screening call, portfolio question, or clear feedback on your fit for {name}.",
+            f"Give {name} another month if the proof you are building maps to repeated job requirements and real employers start reacting to that proof, even if the reaction is not yet an offer.",
+        ]
+        adjust_options = [
+            f"Adjust the target when the same missing requirement appears across employers or when roughly {market_n} targeted applications point toward an adjacent role more often than {name}.",
+            f"Change the role variant, positioning, or proof asset if a repeated gap shows up across several openings or if about {market_n} targeted attempts attract interest for neighboring work instead.",
+            f"Refine the experiment if employers respond to your background but not to the exact {name} target; repeated feedback from around {market_n} applications is enough to justify narrowing or shifting the role.",
+            f"Rework the target if the same skill gap, credential expectation, or role mismatch keeps appearing after about {market_n} disciplined applications or introductions.",
+        ]
+        switch_options = [
+            f"Re-rank the path after you can show relevant evidence, have corrected repeated gaps, and still receive no meaningful market signal. Do not let the first rejection turn your fear of {fear} into a false conclusion.",
+            f"Consider another path only after the test is fair: credible evidence, corrected recurring gaps, and a disciplined set of targeted attempts still produce no useful signal. One rejection is not that evidence.",
+            f"Move {name} down the ranking if you have done the hard part correctly—built proof, addressed the repeated gaps, and tested the market—yet the response remains consistently empty or points elsewhere.",
+            f"Switch only when the market repeatedly contradicts the hypothesis after a responsible test. Your fear of {fear} should not get to make that decision before the evidence does.",
+        ]
+    elif family == "freelance":
+        continue_options = [
+            f"Keep investing in {name} when prospects understand the offer, conversations move toward scope or price, or even one buyer is willing to test a small paid version.",
+            f"Continue when buyers can repeat back the value of the offer and at least some conversations move from curiosity toward scope, timing, budget, or a paid pilot.",
+            f"Give the path more time when the offer earns real buying behavior: detailed questions, requests for scope, pricing discussion, referrals, or a first paid engagement.",
+            f"Increase effort only when the market shows more than politeness—prospects understand the outcome, ask practical buying questions, or agree to test a small paid version of {name}.",
+        ]
+        adjust_options = [
+            f"Adjust the buyer, problem, or deliverable when people respond but do not see enough value to pay. Use the objections from roughly {numbers['outreach']} market contacts before rewriting everything.",
+            f"Change one variable at a time if prospects engage but stall before buying; the pattern across about {numbers['outreach']} contacts should tell you whether the buyer, problem, proof, or deliverable is weak.",
+            f"Refine the offer when conversations happen but willingness to pay does not. Collect the objections from around {numbers['outreach']} real contacts before changing the entire direction.",
+            f"Modify the positioning if attention exists without purchase intent; use roughly {numbers['outreach']} contacts to separate a weak message from a weak market.",
+        ]
+        switch_options = [
+            f"Re-rank the path if a clear offer, credible sample, and repeated outreach create neither conversations nor paid interest. Protect yourself from {fear} by changing one variable at a time before abandoning the direction.",
+            f"Move away from {name} only after a clear offer and credible proof have been shown repeatedly without generating conversations or buying intent. Silence after a fair test matters more than your fear of {fear}.",
+            f"Consider another path if the offer remains understandable and credible but repeated contact still produces no meaningful engagement. Do not confuse one bad week with a completed market test.",
+            f"Switch when both message and proof have been improved and the market still refuses to engage. The decision should come from repeated behavior, not from {fear}.",
+        ]
+    elif family == "service_business":
+        continue_options = [
+            f"Continue when real prospects acknowledge the problem, accept calls or pilots, and the smallest version of {name} can be delivered inside your time, capital, and risk boundaries.",
+            f"Keep {name} at the top when prospects treat the problem as real, agree to discuss a pilot, and delivery looks feasible without breaking the constraints identified in your assessment.",
+            f"Increase commitment when customer behavior confirms both sides of the equation: the problem matters enough to discuss and the pilot can be delivered responsibly with your current resources.",
+            f"Give the path more room when prospects respond to the problem, some accept a call or pilot, and the work can be delivered without violating your stated boundaries.",
+        ]
+        adjust_options = [
+            f"Adjust the customer/problem pairing when prospects agree the problem exists but resist the offer, timing, or price. Use patterns from about {numbers['outreach']} contacts rather than one loud opinion.",
+            f"Change the segment, scope, or price hypothesis if the problem gets recognition but the pilot does not. Let roughly {numbers['outreach']} prospect interactions reveal which variable is failing.",
+            f"Refine the offer when prospects admit the pain but do not move toward a pilot. Review objections across about {numbers['outreach']} contacts before deciding whether the issue is customer, problem, scope, or price.",
+            f"Modify one commercial variable when attention exists without action; the evidence from around {numbers['outreach']} prospects should guide whether to narrow the segment or simplify the pilot.",
+        ]
+        switch_options = [
+            f"Re-rank the path if the problem repeatedly fails to earn attention or if delivering the pilot conflicts with your constraints. The fear of {fear} is not evidence; customer behavior is.",
+            f"Move {name} down the list when repeated prospect behavior says the problem is weak or the delivery model cannot fit your actual constraints without unacceptable trade-offs.",
+            f"Consider another path if neither the problem nor the pilot earns real engagement after a disciplined test, especially if the required delivery keeps violating your time, capital, or risk limits.",
+            f"Switch only when the customer problem fails to hold up or the pilot is operationally incompatible with your life. Do not let {fear} make that call before the market does.",
+        ]
+    else:
+        continue_options = [
+            f"Continue when the intended audience repeatedly asks about the problem, uses the asset or session, and shows willingness to spend time or money for a deeper version of {name}.",
+            f"Keep developing {name} when the same audience problem keeps appearing and people engage enough to request more help, a deeper session, or a paid next step.",
+            f"Increase commitment when your knowledge creates visible utility: people use the asset, return with follow-up questions, refer others, or show willingness to pay for a deeper outcome.",
+            f"Give the path more time when the audience repeatedly validates both the problem and your usefulness in shortening the route to a solution.",
+        ]
+        adjust_options = [
+            "Adjust the format when the problem is real but the delivery model is wrong. Test whether the same expertise works better as consulting, training, a service, or a smaller digital asset.",
+            "Change the packaging before changing the expertise when the problem clearly exists but the current format is not earning enough engagement or willingness to pay.",
+            "Refine how the knowledge is delivered if the audience values the problem but not the current format; compare a session, service, workshop, or smaller asset before abandoning the topic.",
+            "Modify the delivery model when interest in the problem survives but the current package does not. The expertise may be right even when the container is wrong.",
+        ]
+        switch_options = [
+            f"Re-rank the path when the problem does not repeat across the audience or your experience does not create a meaningful shortcut. Do not let {fear} force you to defend an unvalidated idea.",
+            f"Move the path down the list if the audience does not consistently recognize the problem or if your experience cannot produce a useful advantage for them.",
+            f"Consider another direction when the problem fails to repeat and the audience does not treat your knowledge as a meaningful shortcut after a fair test.",
+            f"Switch when both demand and usefulness remain weak after repeated validation. The decision should come from audience behavior, not from the need to prove the idea was right.",
+        ]
 
+    return {
+        "continue": _choice(continue_options, seed, 61),
+        "adjust": _choice(adjust_options, seed, 67),
+        "switch": _choice(switch_options, seed, 71),
+    }
 
 def _alternative_analysis(primary: dict[str, Any], alternative: dict[str, Any], seed: int, index: int) -> dict[str, Any]:
     p_scores = dict(_score_rows(primary))
