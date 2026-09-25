@@ -102,7 +102,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="There Is Another Path — The Path Finder",
-    version="1.4.1-consultation-v2-2",
+    version="1.5.0-prelaunch-ready",
     description="Path Finder commercial MVP + explainable recommendation engine.",
     lifespan=lifespan,
     docs_url="/docs" if EXPOSE_API_DOCS else None,
