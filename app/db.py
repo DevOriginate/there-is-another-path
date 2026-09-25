@@ -7,6 +7,9 @@ from sqlalchemy.engine import Engine
 from .config import DATABASE_URL
 from .security import encrypt_json, decrypt_json
 
+class DuplicateConsultationFingerprint(RuntimeError):
+    pass
+
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -59,6 +62,14 @@ def init_db():
           created_at TEXT NOT NULL,
           UNIQUE(purchase_id, day),
           FOREIGN KEY(purchase_id) REFERENCES purchases(id)
+        )""",
+        """CREATE TABLE IF NOT EXISTS consultation_fingerprints (
+          fingerprint TEXT PRIMARY KEY,
+          created_at TEXT NOT NULL
+        )""",
+        """CREATE TABLE IF NOT EXISTS consultation_fragment_fingerprints (
+          fingerprint TEXT PRIMARY KEY,
+          created_at TEXT NOT NULL
         )""",
         "CREATE INDEX IF NOT EXISTS idx_purchase_status ON purchases(status)",
         "CREATE INDEX IF NOT EXISTS idx_purchase_created ON purchases(created_at)",
@@ -163,9 +174,31 @@ def get_purchase_by_session(session_id: str) -> Optional[dict]:
         row = conn.execute(text("SELECT * FROM purchases WHERE stripe_session_id=:sid"), {"sid":session_id}).fetchone()
     return _rowdict(row)
 
-def save_assessment(purchase_id: int, answers: dict, result: dict):
+def save_assessment(
+    purchase_id: int,
+    answers: dict,
+    result: dict,
+    consultation_fingerprint: str | None = None,
+    consultation_fragment_fingerprints: list[str] | None = None,
+):
     params={"pid":purchase_id,"answers":encrypt_json(answers),"result":encrypt_json(result),"created":now_iso()}
     with ENGINE.begin() as conn:
+        if consultation_fingerprint:
+            inserted = conn.execute(
+                text("INSERT INTO consultation_fingerprints(fingerprint,created_at) VALUES(:fp,:created) ON CONFLICT(fingerprint) DO NOTHING"),
+                {"fp": consultation_fingerprint, "created": params["created"]},
+            ).rowcount
+            if not inserted:
+                raise DuplicateConsultationFingerprint("Consultation content fingerprint already exists")
+
+        for fragment_fp in dict.fromkeys(consultation_fragment_fingerprints or []):
+            inserted = conn.execute(
+                text("INSERT INTO consultation_fragment_fingerprints(fingerprint,created_at) VALUES(:fp,:created) ON CONFLICT(fingerprint) DO NOTHING"),
+                {"fp": fragment_fp, "created": params["created"]},
+            ).rowcount
+            if not inserted:
+                raise DuplicateConsultationFingerprint("Consultation section fingerprint already exists")
+
         if DB_URL.startswith("sqlite:"):
             conn.execute(text("INSERT INTO assessments(purchase_id,answers_json,result_json,created_at) VALUES(:pid,:answers,:result,:created) ON CONFLICT(purchase_id) DO UPDATE SET answers_json=excluded.answers_json,result_json=excluded.result_json,created_at=excluded.created_at"), params)
         else:
@@ -240,6 +273,38 @@ def privacy_maintenance(retention_days: int) -> dict:
         "expired_feedback_deleted": feedback_deleted,
         "expired_assessments_deleted": assessments_deleted,
     }
+
+def consultation_fingerprint_exists(fingerprint: str) -> bool:
+    with ENGINE.connect() as conn:
+        row = conn.execute(
+            text("SELECT 1 FROM consultation_fingerprints WHERE fingerprint=:fp"),
+            {"fp": fingerprint},
+        ).fetchone()
+    return bool(row)
+
+
+def get_recent_consultation_texts(limit: int = 500) -> list[str]:
+    """Return decrypted consultation bodies for similarity checking only."""
+    from .consultation import consultation_text
+
+    texts: list[str] = []
+    with ENGINE.connect() as conn:
+        rows = conn.execute(
+            text("SELECT result_json FROM assessments ORDER BY created_at DESC LIMIT :limit"),
+            {"limit": max(1, min(int(limit), 500))},
+        ).fetchall()
+
+    for row in rows:
+        try:
+            result = decrypt_json(row._mapping["result_json"])
+            consultation = result.get("_consultation") if isinstance(result, dict) else None
+            if consultation:
+                body = consultation_text(consultation)
+                if body:
+                    texts.append(body)
+        except Exception:
+            continue
+    return texts
 
 def delete_personal_data(purchase_id: int) -> dict:
     """Delete consultation data while retaining the minimum purchase record."""

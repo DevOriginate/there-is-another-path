@@ -1864,3 +1864,318 @@ main > .section:nth-of-type(4) .card:hover{
   padding-top:20px;
   border-top:1px dashed var(--line-dark);
 }
+
+
+/* CONSULTATION EXPERIENCE V2 */
+.consultation-intro{
+  display:grid;
+  grid-template-columns:minmax(0,1.2fr) minmax(280px,.8fr);
+  gap:34px;
+  align-items:start;
+}
+
+.consultant-note{
+  position:relative;
+  padding:40px 40px 40px 46px;
+  border-left:5px solid var(--route);
+  background:var(--paper-light);
+  box-shadow:10px 10px 0 rgba(33,78,103,.10);
+}
+
+.consultant-note p{
+  margin:18px 0 0;
+  font-family:var(--display);
+  font-size:clamp(1.75rem,3vw,2.65rem);
+  line-height:1.08;
+  letter-spacing:-.025em;
+}
+
+.tension-card{
+  border-top:5px solid var(--signal);
+}
+
+.client-voice-section{
+  padding-top:26px;
+}
+
+.client-words{
+  padding:34px;
+  border:1px dashed var(--line-dark);
+  background:rgba(248,242,232,.45);
+}
+
+.client-words blockquote{
+  margin:18px 0 0;
+  color:var(--ink-soft);
+  font-family:var(--display);
+  font-size:1.55rem;
+  line-height:1.25;
+}
+
+.decision-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1.1fr) minmax(320px,.9fr);
+  gap:28px;
+  margin-top:34px;
+}
+
+.decision-main,
+.decision-action{
+  min-height:100%;
+}
+
+.decision-main h3{
+  margin-top:18px;
+  font-size:clamp(2.4rem,4.5vw,4.5rem);
+}
+
+.brief-line{
+  display:grid;
+  grid-template-columns:170px 1fr;
+  gap:20px;
+  align-items:start;
+  padding:16px 0;
+  border-top:1px solid var(--line);
+}
+
+.brief-line span{
+  color:var(--faint);
+  font-family:var(--mono);
+  font-size:.68rem;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+
+.brief-line strong{
+  font-weight:600;
+  line-height:1.45;
+}
+
+.snapshot-card{
+  margin-top:30px;
+  padding:0;
+  overflow:hidden;
+}
+
+.snapshot-row{
+  display:grid;
+  grid-template-columns:minmax(180px,.45fr) minmax(0,1fr);
+  gap:24px;
+  padding:18px 24px;
+  border-bottom:1px solid var(--line);
+}
+
+.snapshot-row:last-child{
+  border-bottom:0;
+}
+
+.snapshot-row span{
+  color:var(--faint);
+  font-family:var(--mono);
+  font-size:.68rem;
+  letter-spacing:.055em;
+  text-transform:uppercase;
+}
+
+.snapshot-row strong{
+  font-weight:600;
+}
+
+.diagnostics-card h3{
+  margin-top:20px;
+  font-size:1.45rem;
+}
+
+.diagnostics-card .watch-title{
+  margin-top:34px;
+  padding-top:24px;
+  border-top:1px dashed var(--line-dark);
+}
+
+.fit-row{
+  display:flex;
+  justify-content:space-between;
+  gap:18px;
+  padding:12px 0;
+  border-bottom:1px solid var(--line);
+}
+
+.fit-row span{
+  color:var(--muted);
+}
+
+.fit-row strong{
+  min-width:48px;
+  text-align:right;
+  font-family:var(--mono);
+  color:var(--survey);
+}
+
+.alternative-card{
+  display:flex;
+  flex-direction:column;
+}
+
+.alt-score{
+  margin:6px 0 18px;
+  color:var(--survey);
+  font-family:var(--mono);
+  font-size:.76rem;
+  font-weight:600;
+}
+
+.switch-condition{
+  margin-top:auto;
+  padding:16px 18px;
+  border-left:3px solid var(--signal);
+  background:rgba(225,179,75,.10);
+}
+
+.consultation-week{
+  grid-template-columns:78px 1fr;
+}
+
+.consultation-week .week-title{
+  margin-bottom:6px;
+  color:var(--survey);
+  font-family:var(--mono);
+  font-size:.72rem;
+  font-weight:600;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+
+.consultation-week p{
+  margin:0;
+  color:var(--ink-soft);
+}
+
+.anti-plan{
+  border-color:var(--route);
+  background:
+    linear-gradient(90deg,rgba(214,75,42,.07),transparent 55%),
+    rgba(248,242,232,.72);
+}
+
+.anti-plan p{
+  position:relative;
+  margin:0;
+  padding:16px 0 16px 28px;
+  border-top:1px solid var(--line);
+}
+
+.anti-plan p::before{
+  content:"×";
+  position:absolute;
+  left:2px;
+  top:15px;
+  color:var(--route);
+  font-family:var(--mono);
+  font-weight:700;
+}
+
+.confidence-card{
+  position:relative;
+  overflow:hidden;
+  padding-right:min(34vw,390px);
+}
+
+.confidence-card::before{
+  content:"";
+  position:absolute;
+  right:-30px;
+  top:-34px;
+  width:300px;
+  height:260px;
+  background:var(--contours) center/cover no-repeat;
+  opacity:.42;
+}
+
+.confidence-card h2,
+.confidence-card p,
+.confidence-card .eyebrow{
+  position:relative;
+  z-index:1;
+}
+
+.confidence-number{
+  position:absolute;
+  right:44px;
+  bottom:20px;
+  color:rgba(33,78,103,.16);
+  font-family:var(--display);
+  font-size:clamp(5rem,10vw,9rem);
+  line-height:.8;
+  letter-spacing:-.06em;
+}
+
+@media (max-width:780px){
+  .consultation-intro,
+  .decision-grid{
+    grid-template-columns:1fr;
+  }
+
+  .consultant-note{
+    padding:30px 24px 30px 28px;
+  }
+
+  .brief-line,
+  .snapshot-row{
+    grid-template-columns:1fr;
+    gap:6px;
+  }
+
+  .confidence-card{
+    padding-right:30px;
+    padding-bottom:120px;
+  }
+
+  .confidence-number{
+    right:24px;
+    bottom:26px;
+  }
+}
+
+@media print{
+  .consultant-note,
+  .client-words,
+  .decision-main,
+  .decision-action,
+  .snapshot-card,
+  .diagnostics-card,
+  .alternative-card,
+  .confidence-card,
+  .anti-plan{
+    break-inside:avoid;
+  }
+
+  .confidence-number{
+    color:#ddd;
+  }
+}
+
+
+.decision-rules{
+  margin-top:30px;
+}
+
+.rule-card{
+  min-height:260px;
+}
+
+.rule-card h3{
+  margin-top:16px;
+  font-size:1.55rem;
+}
+
+.continue-rule{
+  border-top:5px solid var(--field);
+}
+
+.adjust-rule{
+  border-top:5px solid var(--signal);
+}
+
+.switch-rule{
+  border-top:5px solid var(--route);
+}

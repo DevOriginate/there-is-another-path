@@ -1,0 +1,262 @@
+name: Consultation V2 CI
+
+on:
+  push:
+    branches:
+      - "enhancement/consultation-v2-personalized"
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  consultation:
+    runs-on: ubuntu-latest
+    env:
+      DEMO_MODE: "true"
+      DATABASE_URL: "sqlite:////tmp/pathfinder-consultation-ci.db"
+      SESSION_COOKIE_SECURE: "false"
+      ADMIN_TOKEN: "ci-admin-token"
+      ASSESSMENT_RETENTION_DAYS: "90"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Compile Python
+        run: python -m compileall -q app
+      - name: Check report JavaScript syntax
+        run: node --check app/static/report.js
+      - name: Consultation quality, uniqueness and integration test
+        shell: bash
+        run: |
+          export DATA_ENCRYPTION_KEY="$(python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')"
+          python - <<'PY'
+          from itertools import combinations
+
+          from fastapi.testclient import TestClient
+
+          from app import db
+          from app.consultation import compose_unique_consultation, consultation_text, similarity
+          from app.engine import evaluate, load_paths
+          from app.main import app
+          from app.models import AssessmentInput
+          from app.reporting import build_report
+          from app.security import create_private_session
+
+          base = dict(
+              age_band="25-34",
+              current_situation="full_time_employee",
+              professional_direction="several_ideas",
+              primary_objectives=["new_career","learn_valuable_skill"],
+              financial_impact="replace_income",
+              available_capital="100_500",
+              income_urgency="3_months",
+              risk_tolerance="moderate",
+              weekly_time="10_20",
+              schedule="after_work",
+              learning_horizon="3_6_months",
+              experience_years="2_5",
+              experience_areas=["technology","customer_service"],
+              help_text="I want a direction I can test without quitting my job.",
+              natural_activities=["technology","problem_solving","analyzing_information","organizing"],
+              forced_choices={"p0":"computer","p1":"build","p2":"technical","p3":"improve"},
+              work_location="mostly_remote",
+              economic_model_preference="stable_paycheck",
+              sales_comfort=2,
+              tech_comfort=5,
+              visibility_comfort=2,
+              constraints=["full_time_job","limited_startup_money"],
+              prospecting="prefer_not",
+              five_year_outcome="better_paying_career",
+              primary_fear="choosing_wrong",
+              twelve_month_change="I want to be in a stronger career with evidence that I made the right move."
+          )
+
+          # Same ranked result, different people: content must still diverge.
+          a1 = AssessmentInput(**base)
+          result = evaluate(a1).model_dump()
+          assert result["top_paths"], "Expected at least one ranked path"
+
+          b = dict(base)
+          b.update(
+              weekly_time="5_10",
+              schedule="weekends",
+              income_urgency="30_days",
+              risk_tolerance="low",
+              help_text="I need a test I can fit around family responsibilities.",
+              constraints=["full_time_job","dependents","limited_startup_money"],
+              primary_fear="wasting_time",
+              twelve_month_change="I want proof that a transition is realistic before I disrupt my family's stability."
+          )
+          a2 = AssessmentInput(**b)
+
+          c1 = compose_unique_consultation(a1.model_dump(), result, 101, [])
+          text1 = consultation_text(c1)
+          c2 = compose_unique_consultation(a2.model_dump(), result, 102, [text1])
+          text2 = consultation_text(c2)
+          assert c1["fingerprint"] != c2["fingerprint"]
+          assert c1["first_move"] != c2["first_move"]
+          assert c1["week_plan"] != c2["week_plan"]
+          assert similarity(text1, text2) < 0.90
+          assert c2["originality"]["checked_against"] == 1
+
+          # Repeated identical answers must not produce recycled consultation bodies.
+          generated = []
+          first_moves = set()
+          fingerprints = set()
+          for purchase_id in range(200, 212):
+              consultation = compose_unique_consultation(
+                  a1.model_dump(),
+                  result,
+                  purchase_id,
+                  generated,
+              )
+              body = consultation_text(consultation)
+              assert consultation["fingerprint"] not in fingerprints
+              assert consultation["first_move"] not in first_moves
+              assert len(consultation["week_plan"]) == 4
+              assert all(item["action"] for item in consultation["week_plan"])
+              assert consultation["anti_plan"]
+              assert consultation["originality"]["max_similarity_to_recent_reports"] < 0.90
+              fingerprints.add(consultation["fingerprint"])
+              first_moves.add(consultation["first_move"])
+              generated.append(body)
+
+          max_pairwise = max(similarity(a, b) for a, b in combinations(generated, 2))
+          assert max_pairwise < 0.92, max_pairwise
+
+          # Different life situations must all produce complete, case-grounded consultations.
+          persona_updates = [
+              dict(
+                  age_band="18-24", current_situation="student", professional_direction="starting_over",
+                  primary_objectives=["learn_valuable_skill","remote_work"], financial_impact="500_month",
+                  available_capital="up_to_100", income_urgency="6_months", risk_tolerance="low",
+                  weekly_time="10_20", schedule="weekends", learning_horizon="3_6_months",
+                  experience_years="none", experience_areas=["none"],
+                  natural_activities=["technology","problem_solving","researching"], work_location="fully_remote",
+                  economic_model_preference="stable_paycheck", sales_comfort=2, tech_comfort=5,
+                  visibility_comfort=2, constraints=["limited_startup_money"], prospecting="prefer_not",
+                  five_year_outcome="better_paying_career", primary_fear="not_good_enough",
+                  help_text="I need a first serious direction without pretending I already have experience.",
+                  twelve_month_change="I want tangible proof that I can enter a stronger field."
+              ),
+              dict(
+                  age_band="35-44", current_situation="freelancer", professional_direction="idea_unsure",
+                  primary_objectives=["work_for_myself","extra_income"], financial_impact="2500_month",
+                  available_capital="500_1500", income_urgency="30_days", risk_tolerance="high",
+                  weekly_time="20_40", schedule="flexible", learning_horizon="1_3_months",
+                  experience_years="10_20", experience_areas=["marketing","creative","sales"],
+                  natural_activities=["designing","writing","selling","creating_content"], work_location="fully_remote",
+                  economic_model_preference="freelancing", sales_comfort=5, tech_comfort=3,
+                  visibility_comfort=4, constraints=["none"], prospecting="yes",
+                  five_year_outcome="work_independently", primary_fear="wasting_time",
+                  help_text="I already freelance, but I need a sharper offer and a better use of my experience.",
+                  twelve_month_change="I want a more focused service that earns more without scattering my attention."
+              ),
+              dict(
+                  age_band="25-34", current_situation="business_owner", professional_direction="several_ideas",
+                  primary_objectives=["start_business","extra_income"], financial_impact="build_business_long_term",
+                  available_capital="1500_5000", income_urgency="3_months", risk_tolerance="high",
+                  weekly_time="20_40", schedule="daytime", learning_horizon="1_3_months",
+                  experience_years="5_10", experience_areas=["entrepreneurship","customer_service","sales"],
+                  natural_activities=["talking","selling","organizing","leading"], work_location="no_preference",
+                  economic_model_preference="small_business", sales_comfort=5, tech_comfort=3,
+                  visibility_comfort=4, constraints=["none"], prospecting="yes",
+                  five_year_outcome="small_business", primary_fear="losing_money",
+                  help_text="I can sell and operate, but I want a business test that does not burn capital blindly.",
+                  twelve_month_change="I want one validated offer with repeatable demand rather than several half-built ideas."
+              ),
+              dict(
+                  age_band="55-64", current_situation="between_careers", professional_direction="want_different",
+                  primary_objectives=["use_experience_differently","meaningful_work"], financial_impact="money_not_primary",
+                  available_capital="500_1500", income_urgency="patient", risk_tolerance="moderate",
+                  weekly_time="10_20", schedule="flexible", learning_horizon="few_weeks",
+                  experience_years="30_plus", experience_areas=["management","education","administration"],
+                  natural_activities=["teaching","leading","helping_people","organizing"], work_location="mostly_remote",
+                  economic_model_preference="consulting", sales_comfort=3, tech_comfort=3,
+                  visibility_comfort=3, constraints=["avoid_physical_work"], prospecting="maybe",
+                  five_year_outcome="meaningful_work", primary_fear="starting_too_late",
+                  help_text="I want to use decades of experience differently without rebuilding from zero.",
+                  twelve_month_change="I want useful work that values judgment and experience more than title or age."
+              ),
+          ]
+
+          diverse_bodies = []
+          for idx, updates in enumerate(persona_updates, start=1):
+              persona_data = dict(base)
+              persona_data.update(updates)
+              persona = AssessmentInput(**persona_data)
+              persona_result = evaluate(persona).model_dump()
+              assert persona_result["top_paths"]
+              consultation = compose_unique_consultation(
+                  persona.model_dump(),
+                  persona_result,
+                  500 + idx,
+                  generated + diverse_bodies,
+              )
+              body = consultation_text(consultation)
+              assert len(consultation["consultant_read"]) > 220
+              assert "30-minute" in consultation["first_move"]
+              assert len(consultation["week_plan"]) == 4
+              assert all(len(w["action"]) > 120 for w in consultation["week_plan"])
+              assert consultation["decision_brief"]["primary_path"] == persona_result["top_paths"][0]["name"]
+              diverse_bodies.append(body)
+
+          assert len({body for body in diverse_bodies}) == len(diverse_bodies)
+
+          # The client's instructions must not fall back to the old generic path blocks.
+          path_map = {p["id"]: p for p in load_paths()["paths"]}
+          primary_meta = path_map[result["top_paths"][0]["id"]]
+          assert primary_meta["first_move"] not in text1
+          for generic_week in primary_meta["week_plan"]:
+              assert generic_week not in text1
+
+          # Persistence: one consultation is generated once, encrypted, and reused.
+          db.init_db()
+          purchase = db.create_purchase(1900, {}, status="paid")
+          saved_result = dict(result)
+          saved_result["_consultation"] = c1
+          db.save_assessment(purchase["id"], a1.model_dump(), saved_result)
+          loaded = db.get_assessment_for_purchase(purchase["id"])
+          assert loaded["result"]["_consultation"]["fingerprint"] == c1["fingerprint"]
+
+          report = build_report(loaded["answers"], loaded["result"])
+          assert report["consultation_version"] == "2.1.0"
+          assert report["first_move"] == c1["first_move"]
+          assert len(report["week_plan"]) == 4
+          assert report["anti_plan"]
+          assert report["consultant_read"]
+          assert report["core_tension"]
+
+          # Full application route: paid private cookie -> submit -> saved consultation -> report.
+          route_purchase = db.create_purchase(1900, {}, status="paid")
+          with TestClient(app) as client:
+              client.cookies.set("pf_session", create_private_session(route_purchase["id"]))
+              submit = client.post("/api/v1/assessments/submit", json=base)
+              assert submit.status_code == 200, submit.text
+              assert submit.json()["report_url"] == "/report"
+
+              private_report = client.get("/api/v1/reports/me")
+              assert private_report.status_code == 200, private_report.text
+              payload = private_report.json()
+              assert payload["consultation_version"] == "2.1.0"
+              assert payload["first_move"]
+              assert len(payload["week_plan"]) == 4
+              assert payload["decision_brief"]["primary_path"]
+
+          # Safety/quality gates: no outcome promises and no advice to abruptly abandon income.
+          combined = " ".join(generated + [text1, text2]).lower()
+          banned = [
+              "guaranteed income",
+              "guaranteed job",
+              "you will definitely",
+              "quit your job now",
+              "resign immediately",
+              "certain success",
+          ]
+          for phrase in banned:
+              assert phrase not in combined, phrase
+
+          print(f"Consultation V2 quality audit passed; max repeated-profile similarity={max_pairwise:.3f}")
+          PY
