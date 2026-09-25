@@ -89,7 +89,8 @@ async function next(){
   headers:{'Content-Type':'application/json'},
   body:JSON.stringify(a)
  });
- const j=await r.json();
+ const j=await r.json().catch(()=>({}));
+ if(r.status===409){location.href='/report';return}
  if(!r.ok){
   const detail=Array.isArray(j.detail)?'Please remove sensitive personal identifiers from your written answers and try again.':(j.detail||'Try again');
   sel('#question').innerHTML='<div class="card"><h2>Could not build report</h2><p class="error">'+String(detail)+'</p></div>';
