@@ -57,7 +57,7 @@ function render(){
   html=pairs.map((p,k)=>`<div class="card"><label class="option"><input type="radio" name="p${k}" value="${p[0]}" ${saved['p'+k]===p[0]?'checked':''}> ${pretty(p[0])}</label><label class="option"><input type="radio" name="p${k}" value="${p[1]}" ${saved['p'+k]===p[1]?'checked':''}> ${pretty(p[1])}</label></div>`).join('');
  }
  sel('#question').innerHTML=`<div class="eyebrow">Path Assessment</div><h1>${q.prompt}</h1><div class="options">${html}</div><div id="err" class="error"></div><div class="navrow"><button class="btn secondary" id="back" ${i===0?'disabled':''}>Back</button><button class="btn" id="next">${i===qs.length-1?'Build my path report':'Continue'}</button></div>`;
- sel('#back').onclick=()=>{capture(false);i--;render()};
+ sel('#back').onclick=async()=>{capture(false);const nextIndex=Math.max(0,i-1);await saveDraft(nextIndex);i=nextIndex;render()};
  sel('#next').onclick=next;
 }
 
