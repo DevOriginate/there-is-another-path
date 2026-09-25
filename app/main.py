@@ -268,7 +268,7 @@ def health():
     data = load_paths()
     return {
         "status": "ok",
-        "app_version": "1.4.1-consultation-v2-2",
+        "app_version": "1.5.0-prelaunch-ready",
         "engine_version": "1.0.0",
         "consultation_version": CONSULTATION_VERSION,
         "market_version": data["market_version"],
