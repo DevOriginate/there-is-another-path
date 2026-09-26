@@ -27,7 +27,6 @@ from .draft_routes import router as draft_router
 from .recovery_routes import router as recovery_router
 from .config import (
     PRODUCT_PRICE_USD,
-    PRODUCT_PRICE_BRL,
     DEMO_MODE,
     META_PIXEL_ID,
     ADMIN_TOKEN,
@@ -92,7 +91,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="There Is Another Path — The Path Finder",
-    version="1.5.3-localized-checkout",
+    version="1.5.4-payment-release-verified",
     description="Path Finder commercial MVP + explainable recommendation engine.",
     lifespan=lifespan,
     docs_url="/docs" if EXPOSE_API_DOCS else None,
@@ -265,7 +264,7 @@ def health():
     data = load_paths()
     return {
         "status": "ok",
-        "app_version": "1.5.3-localized-checkout",
+        "app_version": "1.5.4-payment-release-verified",
         "engine_version": "1.0.0",
         "consultation_version": CONSULTATION_VERSION,
         "market_version": data["market_version"],
@@ -279,7 +278,6 @@ def health():
 def public_config():
     return {
         "product_price_usd": PRODUCT_PRICE_USD,
-        "product_price_brl": PRODUCT_PRICE_BRL,
         "demo_mode": DEMO_MODE,
         "meta_pixel_id": META_PIXEL_ID,
         "support_email": SUPPORT_EMAIL,
@@ -324,13 +322,12 @@ def score_assessment(assessment: AssessmentInput):
 class CheckoutRequest(BaseModel):
     email: str | None = Field(default=None, max_length=250)
     acquisition: dict = Field(default_factory=dict)
-    country_hint: Literal["BR"] | None = None
 
 
 @app.post("/api/v1/checkout/session")
 def checkout_session(payload: CheckoutRequest):
     try:
-        return create_checkout(payload.acquisition, payload.email, payload.country_hint)
+        return create_checkout(payload.acquisition, payload.email)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Checkout error: {exc}") from exc
 
