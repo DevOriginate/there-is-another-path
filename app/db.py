@@ -138,7 +138,6 @@ def create_purchase(
     acquisition: dict[str, Any],
     email: str | None = None,
     status: str = "pending",
-    currency: str = "usd",
 ) -> dict:
     token = secrets.token_urlsafe(24)
     created = now_iso()
@@ -147,7 +146,6 @@ def create_purchase(
         "email": email,
         "status": status,
         "amount": amount_cents,
-        "currency": (currency or "usd").lower(),
         "acq": json.dumps(acquisition),
         "created": created,
         "paid": created if status == "paid" else None,
@@ -156,8 +154,8 @@ def create_purchase(
         if DB_URL.startswith("sqlite:"):
             res = conn.execute(
                 text(
-                    "INSERT INTO purchases(access_token,email,status,amount_cents,currency,acquisition_json,created_at,paid_at) "
-                    "VALUES(:token,:email,:status,:amount,:currency,:acq,:created,:paid)"
+                    "INSERT INTO purchases(access_token,email,status,amount_cents,acquisition_json,created_at,paid_at) "
+                    "VALUES(:token,:email,:status,:amount,:acq,:created,:paid)"
                 ),
                 params,
             )
@@ -165,8 +163,8 @@ def create_purchase(
         else:
             pid = conn.execute(
                 text(
-                    "INSERT INTO purchases(access_token,email,status,amount_cents,currency,acquisition_json,created_at,paid_at) "
-                    "VALUES(:token,:email,:status,:amount,:currency,:acq,:created,:paid) RETURNING id"
+                    "INSERT INTO purchases(access_token,email,status,amount_cents,acquisition_json,created_at,paid_at) "
+                    "VALUES(:token,:email,:status,:amount,:acq,:created,:paid) RETURNING id"
                 ),
                 params,
             ).scalar_one()
