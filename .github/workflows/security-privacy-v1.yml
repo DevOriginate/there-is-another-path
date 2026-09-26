@@ -85,7 +85,7 @@ jobs:
 
               landing = client.get("/")
               assert landing.status_code == 200
-              assert "app.js?v=launch-ux-v1" in landing.text
+              assert "app.js?v=localized-checkout-v1" in landing.text
 
               report = client.get("/api/v1/reports/me")
               assert report.status_code == 200
