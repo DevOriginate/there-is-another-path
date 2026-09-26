@@ -17,6 +17,7 @@ STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "").strip()
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "").strip()
 STRIPE_PRICE_ID = os.getenv("STRIPE_PRICE_ID", "").strip()
 PRODUCT_PRICE_USD = int(os.getenv("PRODUCT_PRICE_USD", "19"))
+PRODUCT_PRICE_BRL = int(os.getenv("PRODUCT_PRICE_BRL", "99"))
 DEMO_MODE = os.getenv("DEMO_MODE", "false").lower() in {"1", "true", "yes", "on"}
 META_PIXEL_ID = os.getenv("META_PIXEL_ID", "").strip()
 ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "change-me-before-production")

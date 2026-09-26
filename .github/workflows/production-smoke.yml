@@ -14,7 +14,7 @@ jobs:
       HEALTH_URL: https://findanotherpath.com/health
       WWW_HEALTH_URL: https://www.findanotherpath.com/health
       LEGACY_HEALTH_URL: https://there-is-another-path.onrender.com/health
-      EXPECTED_APP_VERSION: 1.5.2-launch-ux
+      EXPECTED_APP_VERSION: 1.5.3-localized-checkout
       EXPECTED_CONSULTATION_VERSION: 2.2.0
     steps:
       - name: Wait for Render and verify production health

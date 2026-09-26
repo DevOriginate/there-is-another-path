@@ -2,6 +2,48 @@ const $=(s)=>document.querySelector(s);
 const $$=(s)=>[...document.querySelectorAll(s)];
 let checkoutInFlight=false;
 
+const BRAZIL_TIME_ZONES=new Set([
+  'America/Noronha','America/Belem','America/Fortaleza','America/Recife',
+  'America/Araguaina','America/Maceio','America/Bahia','America/Sao_Paulo',
+  'America/Campo_Grande','America/Cuiaba','America/Santarem',
+  'America/Porto_Velho','America/Boa_Vista','America/Manaus',
+  'America/Eirunepe','America/Rio_Branco'
+]);
+
+function isBrazilianVisitor(){
+  const language=((navigator.languages&&navigator.languages[0])||navigator.language||'').toLowerCase();
+  let timezone='';
+  try{timezone=Intl.DateTimeFormat().resolvedOptions().timeZone||''}catch(_){}
+  return language==='pt-br'||language.startsWith('pt-br')||BRAZIL_TIME_ZONES.has(timezone);
+}
+
+function checkoutPresentation(c){
+  if(isBrazilianVisitor()&&c.product_price_brl){
+    return {
+      country_hint:'BR',
+      currency:'BRL',
+      value:c.product_price_brl,
+      label:new Intl.NumberFormat('pt-BR',{
+        style:'currency',
+        currency:'BRL',
+        minimumFractionDigits:0,
+        maximumFractionDigits:0
+      }).format(c.product_price_brl)
+    };
+  }
+  return {
+    country_hint:null,
+    currency:'USD',
+    value:c.product_price_usd,
+    label:'$'+c.product_price_usd
+  };
+}
+
+function priceLabel(c){
+  return checkoutPresentation(c).label;
+}
+
+
 function qs(){
   return Object.fromEntries(new URLSearchParams(location.search).entries());
 }
@@ -81,11 +123,15 @@ async function beginCheckout(){
   setCheckoutBusy(true);
   try{
     const c=await initCommon();
-    fire('InitiateCheckout',{value:c.product_price_usd,currency:'USD'});
+    const presentation=checkoutPresentation(c);
+    fire('InitiateCheckout',{value:presentation.value,currency:presentation.currency});
     const r=await fetch('/api/v1/checkout/session',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({acquisition:acquisition()})
+      body:JSON.stringify({
+        acquisition:acquisition(),
+        country_hint:presentation.country_hint
+      })
     });
     const j=await r.json();
     if(!r.ok)throw new Error(j.detail||'Checkout failed');
@@ -158,7 +204,7 @@ function renderConsultationHistory(access,container){
 
 function prepareNewPurchaseMode(access,c){
   $$('.checkout-btn').forEach(button=>{
-    button.textContent='Start a new consultation — $'+c.product_price_usd;
+    button.textContent='Start a new consultation — '+priceLabel(c);
     button.onclick=beginCheckout;
   });
   const card=document.querySelector('#offer .grid2 > .card');
@@ -207,7 +253,7 @@ function activateReturningCustomer(access,c){
     const newButton=document.createElement('button');
     newButton.type='button';
     newButton.className='btn secondary block new-consultation-btn';
-    newButton.textContent='Start another consultation — $'+c.product_price_usd;
+    newButton.textContent='Start another consultation — '+priceLabel(c);
     newButton.onclick=()=>{location.href='/?new=1#offer'};
     offerCard.appendChild(newButton);
 
@@ -222,7 +268,7 @@ function activateReturningCustomer(access,c){
 
 function showEndedAccess(access,c){
   $$('.checkout-btn').forEach(button=>{
-    button.textContent='Start a new consultation — $'+c.product_price_usd;
+    button.textContent='Start a new consultation — '+priceLabel(c);
     button.onclick=beginCheckout;
   });
   const card=document.querySelector('#offer .grid2 > .card');
@@ -234,7 +280,7 @@ function showEndedAccess(access,c){
     const reason=access.state==='expired'
       ?'Your previous '+c.access_days+'-day consultation window has ended.'
       :'Your previous consultation is no longer active.';
-    description.textContent=reason+' A new $'+c.product_price_usd+' purchase starts a completely new assessment and consultation.';
+    description.textContent=reason+' A new '+priceLabel(c)+' purchase starts a completely new assessment and consultation.';
   }
 }
 
@@ -288,7 +334,7 @@ function showCheckoutReturnNotice(){
 async function initLanding(){
   const c=await initCommon();
   showCheckoutReturnNotice();
-  $$('.price-value').forEach(x=>x.textContent='$'+c.product_price_usd);
+  $$('.price-value').forEach(x=>x.textContent=priceLabel(c));
   document.querySelectorAll('.access-days').forEach(x=>x.textContent=String(c.access_days));
 
   const access=await existingAccess();
