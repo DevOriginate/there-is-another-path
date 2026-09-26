@@ -23,12 +23,28 @@ def _safe_acquisition(acquisition: dict) -> dict:
     return clean
 
 
-def create_checkout(acquisition: dict, email: str | None = None) -> dict:
-    amount = PRODUCT_PRICE_USD * 100
+def _checkout_amount(country_hint: str | None) -> tuple[int, str]:
+    if str(country_hint or "").strip().upper() == "BR":
+        return PRODUCT_PRICE_BRL * 100, "brl"
+    return PRODUCT_PRICE_USD * 100, "usd"
+
+
+def create_checkout(
+    acquisition: dict,
+    email: str | None = None,
+    country_hint: str | None = None,
+) -> dict:
+    amount, currency = _checkout_amount(country_hint)
     acquisition = _safe_acquisition(acquisition)
 
     if DEMO_MODE or not STRIPE_SECRET_KEY:
-        purchase = db.create_purchase(amount, acquisition, None, status="paid")
+        purchase = db.create_purchase(
+            amount,
+            acquisition,
+            None,
+            status="paid",
+            currency=currency,
+        )
         return {
             "mode": "demo",
             "url": f"{PUBLIC_BASE_URL}/checkout/demo-success?token={purchase['access_token']}",
@@ -37,24 +53,35 @@ def create_checkout(acquisition: dict, email: str | None = None) -> dict:
     import stripe
 
     stripe.api_key = STRIPE_SECRET_KEY
-    purchase = db.create_purchase(amount, acquisition, None, status="pending")
+    purchase = db.create_purchase(
+        amount,
+        acquisition,
+        None,
+        status="pending",
+        currency=currency,
+    )
     purchase_id = str(purchase["id"])
     kwargs = dict(
         mode="payment",
         success_url=f"{PUBLIC_BASE_URL}/checkout/success?session_id={{CHECKOUT_SESSION_ID}}",
         cancel_url=f"{PUBLIC_BASE_URL}/?checkout=cancelled",
         client_reference_id=purchase_id,
-        metadata={"purchase_id": purchase_id},
-        payment_intent_data={"metadata": {"purchase_id": purchase_id}},
+        metadata={"purchase_id": purchase_id, "checkout_currency": currency},
+        payment_intent_data={
+            "metadata": {
+                "purchase_id": purchase_id,
+                "checkout_currency": currency,
+            }
+        },
         allow_promotion_codes=True,
     )
-    if STRIPE_PRICE_ID:
+    if STRIPE_PRICE_ID and currency == "usd":
         kwargs["line_items"] = [{"price": STRIPE_PRICE_ID, "quantity": 1}]
     else:
         kwargs["line_items"] = [
             {
                 "price_data": {
-                    "currency": "usd",
+                    "currency": currency,
                     "unit_amount": amount,
                     "product_data": {
                         "name": PRODUCT_NAME,
@@ -64,6 +91,12 @@ def create_checkout(acquisition: dict, email: str | None = None) -> dict:
                 "quantity": 1,
             }
         ]
+    if currency == "brl":
+        # Keep the integration price in USD globally while Brazilian visitors
+        # receive a native BRL Checkout. Dynamic payment methods remain enabled,
+        # so Pix can appear automatically if/when Stripe enables it for this account.
+        kwargs["locale"] = "pt-BR"
+
     if email:
         kwargs["customer_email"] = email
 
