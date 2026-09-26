@@ -33,50 +33,103 @@ jobs:
           node --check app/static/recover.js
           node --check app/static/admin.js
           node --check app/static/admin.js
-      - name: Verify localized checkout currencies
+      - name: Verify Stripe payment release path
         shell: bash
         run: |
+          export DATA_ENCRYPTION_KEY="$(python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')"
           python - <<'PY'
+          from types import SimpleNamespace
+
+          import stripe
           from fastapi.testclient import TestClient
-          from sqlalchemy import text
 
           from app import db
+          import app.payments as payments
           from app.main import app
 
           db.init_db()
 
-          with TestClient(app) as client:
-              public = client.get("/api/v1/config/public")
-              assert public.status_code == 200, public.text
-              assert public.json()["product_price_usd"] == 19
-              assert public.json()["product_price_brl"] == 99
+          purchase = db.create_purchase(
+              1900,
+              {"utm_source": "ci-payment-release"},
+              status="pending",
+          )
+          session_id = "cs_test_ci_paid_release"
+          payment_intent_id = "pi_test_ci_paid_release"
+          db.set_stripe_session(purchase["id"], session_id)
 
-              br = client.post(
-                  "/api/v1/checkout/session",
-                  json={"acquisition": {"utm_source": "ci-br"}, "country_hint": "BR"},
-              )
-              assert br.status_code == 200, br.text
+          # Simulate the exact successful Checkout webhook state from Stripe.
+          original_construct_event = stripe.Webhook.construct_event
+          original_retrieve = stripe.checkout.Session.retrieve
+          original_secret = payments.STRIPE_SECRET_KEY
+          original_webhook_secret = payments.STRIPE_WEBHOOK_SECRET
 
-              us = client.post(
-                  "/api/v1/checkout/session",
-                  json={"acquisition": {"utm_source": "ci-us"}},
-              )
-              assert us.status_code == 200, us.text
+          payments.STRIPE_SECRET_KEY = "sk_test_ci"
+          payments.STRIPE_WEBHOOK_SECRET = "whsec_ci"
 
-          with db.ENGINE.connect() as conn:
-              rows = conn.execute(
-                  text(
-                      "SELECT amount_cents,currency,acquisition_json "
-                      "FROM purchases ORDER BY id DESC LIMIT 2"
+          stripe.Webhook.construct_event = lambda payload, signature, secret: {
+              "type": "checkout.session.completed",
+              "data": {
+                  "object": {
+                      "id": session_id,
+                      "payment_status": "paid",
+                      "payment_intent": payment_intent_id,
+                      "amount_total": 1900,
+                      "currency": "usd",
+                  }
+              },
+          }
+
+          stripe.checkout.Session.retrieve = lambda supplied_session_id: SimpleNamespace(
+              id=supplied_session_id,
+              payment_status="paid",
+              payment_intent=payment_intent_id,
+              amount_total=1900,
+              currency="usd",
+          )
+
+          try:
+              with TestClient(app) as client:
+                  webhook = client.post(
+                      "/api/v1/stripe/webhook",
+                      content=b'{"ci":"payment-release"}',
+                      headers={"stripe-signature": "ci-signature"},
                   )
-              ).fetchall()
+                  assert webhook.status_code == 200, webhook.text
+                  assert webhook.json()["type"] == "checkout.session.completed"
 
-          assert rows[0]._mapping["amount_cents"] == 1900
-          assert rows[0]._mapping["currency"] == "usd"
-          assert rows[1]._mapping["amount_cents"] == 9900
-          assert rows[1]._mapping["currency"] == "brl"
+                  stored = db.get_purchase_by_session(session_id)
+                  assert stored is not None
+                  assert stored["status"] == "paid"
+                  assert stored["stripe_payment_intent_id"] == payment_intent_id
 
-          print("Localized checkout currencies passed")
+                  success = client.get(
+                      "/checkout/success",
+                      params={"session_id": session_id},
+                      follow_redirects=False,
+                  )
+                  assert success.status_code == 303, success.text
+                  assert success.headers["location"] == "/start?welcome=1"
+                  assert "pf_session=" in success.headers.get("set-cookie", "")
+                  client.cookies.update(success.cookies)
+
+                  access = client.get("/api/v1/access/me")
+                  assert access.status_code == 200, access.text
+                  access_data = access.json()
+                  assert access_data["valid"] is True
+                  assert access_data["completed"] is False
+                  assert access_data["active_purchase_id"] == purchase["id"]
+
+                  assessment = client.get("/start")
+                  assert assessment.status_code == 200
+                  assert "assessment.js" in assessment.text
+
+              print("Stripe payment release path passed")
+          finally:
+              stripe.Webhook.construct_event = original_construct_event
+              stripe.checkout.Session.retrieve = original_retrieve
+              payments.STRIPE_SECRET_KEY = original_secret
+              payments.STRIPE_WEBHOOK_SECRET = original_webhook_secret
           PY
 
       - name: Exercise paid consultation lifecycle
