@@ -26,6 +26,7 @@ from .access_routes import router as access_router
 from .draft_routes import router as draft_router
 from .recovery_routes import router as recovery_router
 from .config import (
+    PUBLIC_BASE_URL,
     PRODUCT_PRICE_USD,
     DEMO_MODE,
     META_PIXEL_ID,
@@ -91,7 +92,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="There Is Another Path — The Path Finder",
-    version="1.5.4-payment-release-verified",
+    version="1.6.0-acquisition-ready",
     description="Path Finder commercial MVP + explainable recommendation engine.",
     lifespan=lifespan,
     docs_url="/docs" if EXPOSE_API_DOCS else None,
@@ -102,6 +103,17 @@ app.mount("/static", StaticFiles(directory=STATIC), name="static")
 app.include_router(access_router)
 app.include_router(draft_router)
 app.include_router(recovery_router)
+
+@app.middleware("http")
+async def canonical_custom_domain(request: Request, call_next):
+    host = request.headers.get("host", "").split(":", 1)[0].lower()
+    if request.method in {"GET", "HEAD"} and host.endswith(".onrender.com") and PUBLIC_BASE_URL.startswith("https://"):
+        target = f"{PUBLIC_BASE_URL}{request.url.path}"
+        if request.url.query:
+            target += f"?{request.url.query}"
+        return RedirectResponse(target, status_code=308)
+    return await call_next(request)
+
 
 _rate_hits = defaultdict(deque)
 _RATE_RULES = {
@@ -199,6 +211,22 @@ def landing():
     return page("index.html")
 
 
+@app.get("/ig", include_in_schema=False)
+def instagram_entry():
+    return RedirectResponse(
+        "/?utm_source=instagram&utm_medium=organic&utm_campaign=social_profile",
+        status_code=302,
+    )
+
+
+@app.get("/fb", include_in_schema=False)
+def facebook_entry():
+    return RedirectResponse(
+        "/?utm_source=facebook&utm_medium=organic&utm_campaign=social_profile",
+        status_code=302,
+    )
+
+
 @app.get("/start", include_in_schema=False)
 def start(request: Request, token: str | None = None):
     # One-release migration path for old paid links. New links never expose the token.
@@ -264,7 +292,7 @@ def health():
     data = load_paths()
     return {
         "status": "ok",
-        "app_version": "1.5.4-payment-release-verified",
+        "app_version": "1.6.0-acquisition-ready",
         "engine_version": "1.0.0",
         "consultation_version": CONSULTATION_VERSION,
         "market_version": data["market_version"],

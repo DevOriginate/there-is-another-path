@@ -37,6 +37,24 @@ async function init(){
   return;
  }
  if(aj.completed){location.href=aj.report_url||'/report';return}
+
+ const params=new URLSearchParams(location.search);
+ if(params.get('welcome')==='1'&&window.PathFinder){
+  try{
+   const c=await window.PathFinder.config();
+   if(!c.demo_mode&&aj.active_purchase_id){
+    window.PathFinder.fireOnce(
+      'purchase-'+String(aj.active_purchase_id),
+      'Purchase',
+      {value:c.product_price_usd,currency:'USD',content_name:'The Path Finder'}
+    );
+   }
+  }catch(err){console.warn('Could not register purchase measurement',err)}
+  params.delete('welcome');
+  const query=params.toString();
+  history.replaceState(null,'',location.pathname+(query?'?'+query:'')+location.hash);
+ }
+
  qs=(await fetch('/api/v1/assessment/schema').then(r=>r.json())).questions;
  await loadDraft();
  render();

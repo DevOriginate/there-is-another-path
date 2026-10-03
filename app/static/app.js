@@ -1,14 +1,24 @@
 const $=(s)=>document.querySelector(s);
 const $$=(s)=>[...document.querySelectorAll(s)];
 let checkoutInFlight=false;
+const ATTRIBUTION_KEY='pf-acquisition-v1';
+const pendingMetaEvents=[];
+
+function safeStorage(storage,key,value){
+  try{
+    if(value===undefined)return storage.getItem(key);
+    storage.setItem(key,value);
+  }catch(_){}
+  return null;
+}
 
 function qs(){
   return Object.fromEntries(new URLSearchParams(location.search).entries());
 }
 
-function acquisition(){
+function captureAcquisition(){
   const q=qs();
-  return {
+  const current={
     utm_source:q.utm_source||'',
     utm_medium:q.utm_medium||'',
     utm_campaign:q.utm_campaign||'',
@@ -16,14 +26,88 @@ function acquisition(){
     utm_term:q.utm_term||'',
     landing_variant:'v1'
   };
+
+  const hasCampaign=Object.entries(current).some(([key,value])=>key!=='landing_variant'&&Boolean(value));
+  if(!hasCampaign && document.referrer){
+    try{
+      const refHost=new URL(document.referrer).hostname.toLowerCase();
+      if(refHost.includes('instagram.com')){
+        current.utm_source='instagram';
+        current.utm_medium='organic_referral';
+        current.utm_campaign='social_profile';
+      }else if(refHost.includes('facebook.com')||refHost.includes('fb.com')){
+        current.utm_source='facebook';
+        current.utm_medium='organic_referral';
+        current.utm_campaign='social_profile';
+      }
+    }catch(_){}
+  }
+
+  const previousRaw=safeStorage(sessionStorage,ATTRIBUTION_KEY);
+  let previous={};
+  if(previousRaw){
+    try{previous=JSON.parse(previousRaw)||{}}catch(_){}
+  }
+
+  const merged={...previous};
+  Object.entries(current).forEach(([key,value])=>{
+    if(value)merged[key]=value;
+  });
+  if(!merged.landing_variant)merged.landing_variant='v1';
+
+  if(hasCampaign||current.utm_source||Object.keys(previous).length){
+    safeStorage(sessionStorage,ATTRIBUTION_KEY,JSON.stringify(merged));
+  }
+  return merged;
+}
+
+function acquisition(){
+  return captureAcquisition();
+}
+
+function cleanCampaignQuery(){
+  const params=new URLSearchParams(location.search);
+  let changed=false;
+  ['utm_source','utm_medium','utm_campaign','utm_content','utm_term'].forEach(key=>{
+    if(params.has(key)){params.delete(key);changed=true}
+  });
+  if(!changed)return;
+  const query=params.toString();
+  history.replaceState(null,'',location.pathname+(query?'?'+query:'')+location.hash);
 }
 
 async function config(){
   return fetch('/api/v1/config/public').then(r=>r.json());
 }
 
+function emitMetaEvent(name,data={},marker=''){
+  if(!window.fbq){
+    pendingMetaEvents.push({name,data,marker});
+    return false;
+  }
+  fbq('track',name,data);
+  if(marker)safeStorage(localStorage,marker,'1');
+  return true;
+}
+
 function fire(name,data={}){
-  if(window.fbq)fbq('track',name,data);
+  emitMetaEvent(name,data);
+}
+
+function fireOnce(key,name,data={}){
+  const marker='pf-meta-event-'+key;
+  if(safeStorage(localStorage,marker)==='1')return;
+  emitMetaEvent(name,data,marker);
+}
+
+function flushMetaEvents(){
+  if(!window.fbq)return;
+  while(pendingMetaEvents.length){
+    const event=pendingMetaEvents.shift();
+    if(event.marker&&safeStorage(localStorage,event.marker)==='1')continue;
+    fbq('track',event.name,event.data||{});
+    if(event.marker)safeStorage(localStorage,event.marker,'1');
+  }
 }
 
 function installPixel(id){
@@ -36,7 +120,7 @@ function installPixel(id){
     t=b.createElement(e);t.async=!0;t.src=v;
     s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s);
   }(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
-  fbq('init',id);fbq('track','PageView');
+  fbq('init',id);fbq('track','PageView');flushMetaEvents();
 }
 
 function metaConsent(id){
@@ -53,6 +137,7 @@ function metaConsent(id){
 }
 
 async function initCommon(){
+  captureAcquisition();
   const c=await config();
   metaConsent(c.meta_pixel_id);
   document.querySelectorAll('.support-email').forEach(x=>{
@@ -287,6 +372,8 @@ function showCheckoutReturnNotice(){
 
 async function initLanding(){
   const c=await initCommon();
+  fire('ViewContent',{content_name:'The Path Finder',value:c.product_price_usd,currency:'USD'});
+  cleanCampaignQuery();
   showCheckoutReturnNotice();
   $$('.price-value').forEach(x=>x.textContent='$'+c.product_price_usd);
   document.querySelectorAll('.access-days').forEach(x=>x.textContent=String(c.access_days));
@@ -312,7 +399,7 @@ async function initLanding(){
   $$('.checkout-btn').forEach(b=>b.onclick=beginCheckout);
 }
 
-window.PathFinder={config,fire,initCommon};
+window.PathFinder={config,fire,fireOnce,initCommon,acquisition};
 window.addEventListener('DOMContentLoaded',()=>{
   if(document.body.dataset.page==='landing')initLanding();
   else initCommon();
