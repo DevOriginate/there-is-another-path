@@ -1,5 +1,5 @@
 const $=(s)=>document.querySelector(s);
-const $=(s)=>[...document.querySelectorAll(s)];
+const $$=(s)=>[...document.querySelectorAll(s)];
 let checkoutInFlight=false;
 const ATTRIBUTION_KEY='pf-acquisition-v1';
 const pendingMetaEvents=[];
