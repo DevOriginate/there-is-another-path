@@ -61,5 +61,10 @@ Open:
 - Local persistence: SQLite
 - Production persistence: PostgreSQL via `DATABASE_URL`
 - `render.yaml` included for Render deployment
+- Canonical production URL: **https://findanotherpath.com**
+- Privacy-gated Meta Pixel support via `META_PIXEL_ID`
+- UTM acquisition persistence from landing page to Stripe checkout
+- Verified-purchase Meta `Purchase` event after successful Stripe release
+- Clean organic social entry routes: `/ig` and `/fb`
 
 See `DEPLOY_RENDER.md` and `STRIPE_BRAZIL_SETUP.md`.
